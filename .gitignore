@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.log
+.baxter_*
+*.local.json
