@@ -24,23 +24,23 @@ implementation to read, not a turnkey install.
 
 ```mermaid
 flowchart TD
-    W[baxter_watch.ps1<br/>supervisor- heartbeat, hot reload,<br/>singleton election, game detection] -->|every ~60s| T[baxter_triage.py<br/>the pump: poll all channels,<br/>journal, dispatch]
-    G[Gmail x3] --> T
-    D[Discord] --> T
-    WA[WhatsApp bridge] --> T
-    V[voice notes<br/>whisper] --> T
-    T -->|quick reply| F[fast lane<br/>15s poll] --> SAY[baxter_say<br/>the only mouth]
-    T -->|build-worthy| PM[PM delegate<br/>one model writes a PRD]
-    PM --> MGR{second model<br/>greenlights?}
-    MGR -->|reject| PARK[parked]
-    MGR -->|approve| Q[build queue<br/>lanes, clash checks]
-    Q --> LANE[worker lane]
-    LANE --> VER{baxter_verify<br/>independent checker<br/>proves the claim}
-    VER -->|NOT PROVEN| REPAIR[classify: transient /<br/>deterministic / gated<br/>auto-repair, capped retries]
+    W["baxter_watch.ps1<br/>supervisor- heartbeat, hot reload,<br/>singleton election, game detection"] -->|"every ~60s"| T["baxter_triage.py<br/>the pump- poll all channels,<br/>journal, dispatch"]
+    G["Gmail x3"] --> T
+    D["Discord"] --> T
+    WA["WhatsApp bridge"] --> T
+    V["voice notes<br/>whisper"] --> T
+    T -->|"quick reply"| F["fast lane<br/>15s poll"] --> SAY["baxter_say<br/>the only mouth"]
+    T -->|"build-worthy"| PM["PM delegate<br/>one model writes a PRD"]
+    PM --> MGR{"second model<br/>greenlights?"}
+    MGR -->|"reject"| PARK["parked"]
+    MGR -->|"approve"| Q["build queue<br/>lanes, clash checks"]
+    Q --> LANE["worker lane"]
+    LANE --> VER{"baxter_verify<br/>independent checker<br/>proves the claim"}
+    VER -->|"NOT PROVEN"| REPAIR["classify- transient,<br/>deterministic, gated-<br/>auto-repair, capped retries"]
     REPAIR --> LANE
-    VER -->|proven| LAND[landed]
-    U[baxter_usage<br/>governor: real usage API,<br/>pause 80% / shrink 90%] -.gates.-> T
-    U -.gates.-> Q
+    VER -->|"proven"| LAND["landed"]
+    U["baxter_usage<br/>governor- real usage API,<br/>pause 80%, shrink 90%"] -. gates .-> T
+    U -. gates .-> Q
 ```
 
 ## Design positions
