@@ -1,117 +1,134 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
-  <img src="docs/media/banner-light.svg" alt="BAXTER- an autonomous chief-of-staff that reads four inboxes, builds its own features, and refuses to trust its own work until a second opinion proves it." width="100%">
+  <img src="docs/media/banner-light.svg" alt="Baxter system readout: intake, gate, build, and proof are online." width="100%">
 </picture>
 
-![PowerShell + Python](https://img.shields.io/badge/runtime-PowerShell_+_Python_3.12-3776ab?logo=python&logoColor=white)
-![LOC](https://img.shields.io/badge/core-~48k_lines-e3b341)
-![tests](https://img.shields.io/badge/exams-112_files,_~29k_lines-2ea043)
-![sends](https://img.shields.io/badge/unsupervised_sends-0-8b949e)
+# Baxter
 
-Baxter is a personal AI chief-of-staff that runs 24/7 on my PC. It watches **Gmail
-(3 accounts), Discord, WhatsApp, and voice notes**, triages everything into an
-Obsidian vault, answers on Discord, and- this is the interesting part- **builds and
-ships its own new features**, gated by a PRD process, a usage governor, and a
-verification layer that refuses to believe a worker's "done" until a second,
-independent process proves it.
+Baxter is an autonomous chief-of-staff that turns Gmail, Discord, WhatsApp, and
+voice-note inputs into a governed stream of replies, reminders, and build work.
+It can propose and implement its own features, but it cannot simply declare them
+finished: a machine-checked PRD, a second-model review, conflict-aware scheduling,
+and an independent verification pass sit between an idea and a landed result.
 
-This repo is the **curated core**: 25 of the system's ~210 modules, sanitized for
-publication (paths, channel IDs, and addresses are anonymized; secrets were always
-externalized and are not- and never were- in these files). It's a reference
-implementation to read, not a turnkey install.
+This repository is the sanitised public core- 25 Python and PowerShell modules
+from a larger, continuously running system. It is designed to be inspected and
+tested without exposing the machine-specific integrations that operate it.
 
-## The loop
+## System readout
+
+| Signal | Observed in this repository |
+|---|---|
+| `SOURCE` | 23 Python modules + 2 PowerShell modules, 30,234 source lines |
+| `INTAKE` | Three-account IMAP, Discord, a read-only WhatsApp feed, and a supervised voice-transcription handoff |
+| `SCHEDULER` | 10 build lanes with declared touch-sets and live conflict checks |
+| `GOVERNOR` | Big work holds at 80% session usage; routine work holds at 90%; vital work remains available |
+| `PROOF` | The diagram self-test reports `22 nodes, 10 lanes, text extractable` |
+
+The numbers above come from the checked-in source, not an external dashboard.
+The commands under [Quickstart](#quickstart) reproduce the runnable checks.
+
+## Control loop
 
 ```mermaid
-flowchart TD
-    W["baxter_watch.ps1<br/>supervisor- heartbeat, hot reload,<br/>singleton election, game detection"] -->|"every ~60s"| T["baxter_triage.py<br/>the pump- poll all channels,<br/>journal, dispatch"]
-    G["Gmail x3"] --> T
-    D["Discord"] --> T
-    WA["WhatsApp bridge"] --> T
-    V["voice notes<br/>whisper"] --> T
-    T -->|"quick reply"| F["fast lane<br/>15s poll"] --> SAY["baxter_say<br/>the only mouth"]
-    T -->|"build-worthy"| PM["PM delegate<br/>one model writes a PRD"]
-    PM --> MGR{"second model<br/>greenlights?"}
-    MGR -->|"reject"| PARK["parked"]
-    MGR -->|"approve"| Q["build queue<br/>lanes, clash checks"]
-    Q --> LANE["worker lane"]
-    LANE --> VER{"baxter_verify<br/>independent checker<br/>proves the claim"}
-    VER -->|"NOT PROVEN"| REPAIR["classify- transient,<br/>deterministic, gated-<br/>auto-repair, capped retries"]
-    REPAIR --> LANE
-    VER -->|"proven"| LAND["landed"]
-    U["baxter_usage<br/>governor- real usage API,<br/>pause 80%, shrink 90%"] -. gates .-> T
-    U -. gates .-> Q
+flowchart LR
+    INPUTS["Gmail · Discord · WhatsApp · voice"] --> PUMP["Triage pump<br/>normalise · journal · route"]
+    PUMP -->|"small ask"| FAST["Fast reply lane"]
+    FAST --> MOUTH["Single deduplicated output path"]
+    PUMP -->|"build-worthy"| PRD["Machine-checked PRD"]
+    PRD --> REVIEW{"Independent PM review"}
+    REVIEW -->|"refuse"| PARK["Park with evidence"]
+    REVIEW -->|"approve"| QUEUE["Conflict-aware queue<br/>10 bounded lanes"]
+    QUEUE --> WORKER["Scoped build worker"]
+    WORKER --> VERIFY{"Independent verification"}
+    VERIFY -->|"proved"| MOUTH
+    VERIFY -->|"not proved"| REPAIR["Classify · retry · repair · cap"]
+    REPAIR --> QUEUE
+    USAGE["Usage governor<br/>80% big hold · 90% vital-only"] -.-> PUMP
+    USAGE -.-> QUEUE
 ```
 
-## Design positions
+The important boundary is between `WORKER` and `VERIFY`. A worker's completion
+message is a claim. [baxter_verify.py](baxter_verify.py) runs the declared proof
+separately, classifies the failure, and records the outcome before anything is
+treated as landed.
 
-**Nothing self-files.** An ask only becomes a build after one model instance writes
-a PRD against a machine-checked template (`baxter_prd_template.py`- the touch-set
-must be disjoint from other queued builds, the verify command must actually
-resolve), and a *second* instance reviews and greenlights it (`baxter_pm_delegate.py`).
+## Why the system is difficult
 
-**Verify before trust.** Every lane exit runs `baxter_verify.py`: the declared
-verify command, or a separate checker instance that observes behavior rather than
-reading the diff. A worker saying "done" is a claim, not a fact. Failures are
-classified- transient (retry once), deterministic (auto-repair, hard cap 3),
-gated (park + notify)- and logged to a build-outcomes ledger.
+**It schedules edits, not just tasks.** Each queued build declares the files or
+regions it may touch. [baxter_usage.py](baxter_usage.py) refuses vague hub-file
+claims, detects overlapping work, and prevents colliding lanes from running
+together.
 
-**Meter the real thing.** `baxter_usage.py` polls the actual usage API rather than
-estimating tokens (an estimating heuristic was demoted after it under-reported).
-Triage pauses at 80% of budget, builds shrink at 90%, and the governor fails open
-only after 45+ minutes of stale data.
+**It has one mouth.** Replies pass through
+[baxter_say.py](baxter_say.py) and
+[baxter_send_dedup.py](baxter_send_dedup.py). Shared claim ledgers and locks make
+duplicate delivery a structural failure instead of a prompt-level suggestion.
 
-**One mouth.** All outbound traffic goes through `baxter_say.py` + `baxter_send_dedup.py`.
-Nothing sends to the outside world- no emails, no messages to anyone but me- and
-double-send is structurally guarded, not vibes-guarded.
+**It verifies the verifier.** PRD checks reject proofs that cannot fail, malformed
+commands, missing touch-set paths, and trivial checks that already pass before
+the build starts.
 
-**Die loudly, heal quietly.** Three independent recovery layers:
-- `baxter_stuck_doctor.py` detects lanes that stopped *thinking* (CPU-tree stall),
-  not just ones that stopped running.
-- `baxter_doctor_ai.py` has two *different* AI vendors diagnose Baxter blind and in
-  parallel; a repair fires only on a unanimous, whitelisted, non-self-targeting
-  verdict. Refusal is the default.
-- `baxter_coop_guardian.py` keeps the sibling bots alive from *outside* the watcher,
-  so one crash can't cascade through the family.
+**It degrades deliberately.** The usage governor drains or holds new work by
+class while keeping the vital reply path alive. Meter staleness, reset windows,
+and explicit breach controls are encoded as state transitions rather than token
+estimates.
 
-**Know which model you're holding.** `baxter_modelguard.py` is the single choke
-point for which model tier and which tool scopes any spawn receives, with a runtime
-drift detector- the expensive tier physically can't be selected for routine work.
+**It supervises its own supervision.** The watcher maintains heartbeats during
+long triage passes, the reaction audit reconciles visible work receipts against
+delivered replies, and the stuck doctor measures process-tree progress instead
+of trusting that a PID still exists.
 
-## What's in the box
+## Quickstart
 
-| Layer | Modules |
-|---|---|
-| Supervision | `baxter_watch.ps1` (1.8k lines- heartbeat, hot-reload with settle-window debounce, fullscreen-game detection), `baxter_coop_guardian.py`, `baxter_notify.ps1` |
-| Ingestion | `baxter_triage.py` (5.4k- the pump), `baxter_gmail.py`, `baxter_slash.py` (Discord gateway + slash commands), `baxter_fast.py` (15s fast lane) |
-| Governance | `baxter_usage.py` (6.5k- governor + build queue), `baxter_lanes.py`, `baxter_modelguard.py`, `baxter_rules.py` (the rules block every prompt carries) |
-| Build system | `baxter_pm_delegate.py`, `baxter_prd_template.py`, `baxter_orch.py` (PLAN→EXECUTE→REVIEW), `baxter_verify.py` |
-| Output | `baxter_say.py`, `baxter_send_dedup.py`, `baxter_react.py` + `baxter_reaction_watch.py` (👀→⚙️→✅ receipts, self-auditing), `baxter_reminders.py` |
-| Self-repair | `baxter_stuck_doctor.py`, `baxter_doctor_ai.py`, `baxter_coop.py`, `baxter_siblings.py` |
-| Meta | `baxter_flow_diagram.py`- renders the queue architecture as a PDF *derived from live constants*, so the diagram can't drift from the code |
+The public core is a readable reference implementation, not a turnkey daemon.
+Its production adapters and secrets remain outside this repository. The
+self-contained checks below are the fastest way to exercise real control paths:
 
-## Tested like it matters
+```powershell
+git clone https://github.com/LolStar123/baxter.git
+cd baxter
+python baxter_modelguard.py --selftest
+python baxter_reaction_watch.py --selftest
+python baxter_prd_template.py --print
+```
 
-The full system carries **112 test files (~29k lines)** against ~48k lines of core-
-a vocabulary of its own: `_exam` (68 scenario tests), `_check` (15), `_selftest`
-(12), `_verify` (8), `_livecheck` (6, against the real system), `_e2e` (5),
-`_redproof` (4, adversarial regressions), `_mutation_test` (2). Most core modules
-also self-test via a `--selftest` flag. The exams aren't in this curated drop, but
-the `--selftest` entry points are, in the modules themselves.
+Expected proof lines:
 
-## Numbers that amuse me
+```text
+modelguard selftest OK: 12 classes, file=haiku, prose=sonnet, fast=sonnet, flagship=opus, Fable refused.
+PHANTOM-COG SELFTEST OK
+```
 
-- The watcher keeps its own heartbeat while a multi-minute triage runs, so the
-  fast lane never starves behind a slow email batch.
-- The reaction receipts (👀 seen, ⚙️ working, ✅ done) are reconciled against
-  actually-delivered replies by a separate audit loop, because even the
-  acknowledgements have a supervisor.
-- Baxter has two sibling bots (different AI vendors) it consults as analysts- and
-  a dedicated module whose only job is making sure it never answers a message
-  addressed to one of them.
+The third command prints the actual 74-line PRD form used by the gate. To verify
+the code-derived architecture diagram as well:
 
----
+```powershell
+python -m pip install matplotlib
+python baxter_flow_diagram.py --selftest
+```
 
-*Built by [Atul Kanodia](https://github.com/LolStar123), mostly by directing the
-system to build itself- which is exactly why the PRD gate, the verify layer, and
-the usage governor exist.*
+That check returns `SELFTEST OK (22 nodes, 10 lanes, text extractable)`.
+
+## Module map
+
+| Layer | Primary modules | Responsibility |
+|---|---|---|
+| Supervision | [baxter_watch.ps1](baxter_watch.ps1), [baxter_stuck_doctor.py](baxter_stuck_doctor.py), [baxter_coop_guardian.py](baxter_coop_guardian.py) | Heartbeats, hot reload, liveness, and recovery |
+| Intake | [baxter_triage.py](baxter_triage.py), [baxter_gmail.py](baxter_gmail.py), [baxter_slash.py](baxter_slash.py) | Read, normalise, route, and expose commands |
+| Governance | [baxter_usage.py](baxter_usage.py), [baxter_lanes.py](baxter_lanes.py), [baxter_modelguard.py](baxter_modelguard.py) | Budget gates, lane ownership, and model policy |
+| Build | [baxter_prd_template.py](baxter_prd_template.py), [baxter_pm_delegate.py](baxter_pm_delegate.py), [baxter_orch.py](baxter_orch.py) | Specify, review, plan, execute, and review again |
+| Proof | [baxter_verify.py](baxter_verify.py), [baxter_rules.py](baxter_rules.py) | Independent acceptance and prompt-rule integrity |
+| Output | [baxter_say.py](baxter_say.py), [baxter_send_dedup.py](baxter_send_dedup.py), [baxter_reaction_watch.py](baxter_reaction_watch.py) | One delivery path, deduplication, and receipt repair |
+| Diagnosis | [baxter_doctor_ai.py](baxter_doctor_ai.py), [baxter_coop.py](baxter_coop.py) | Bounded multi-model diagnosis and analyst fan-out |
+
+## Contributing
+
+Keep changes narrow, preserve the fail-closed gates, and extend a self-test when
+behaviour changes. Never add real account identifiers, machine usernames,
+absolute personal paths, inbox content, or credentials. Open an issue first for
+changes that widen an outward action or weaken an approval boundary.
+
+## Licence
+
+[MIT](LICENSE). Built by [Atul Kanodia](https://github.com/LolStar123).
