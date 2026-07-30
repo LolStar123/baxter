@@ -7,9 +7,9 @@ BLIND- neither sees the other's answer, nor its own prior one. A repair runs onl
 return the IDENTICAL action on the IDENTICAL target, that action is on a closed WHITELIST,
 and the target is not PROTECTED. Everything else- disagreement, prose, an error envelope,
 an off-whitelist action, a doctor pointing at its own life-support- is refused, written to
-the audit log, and flagged to Atul. Refusal is the default; execution is the narrow exception.
+the audit log, and flagged to the owner. Refusal is the default; execution is the narrow exception.
 When both doctors report no fault the pass is 'healthy': audited, and silent. Only a fault
-ever reaches Atul.
+ever reaches the owner.
 
 WHY TWO ENGINES. Codex runs on the ChatGPT sub, Jem on Gemini. Correlated failure is the
 thing being bought off: one hallucinated diagnosis cannot move the machine. The bundle is
@@ -79,7 +79,7 @@ NO_WIN = 0x08000000
 # ---------------------------------------------------------------------------- the closed sets
 #
 # Four reversible acts. Editing code, touching secrets, moving the usage bands, anything
-# outward- never executed, whatever the doctors agree on. Atul's standing line: the code
+# outward- never executed, whatever the doctors agree on. the owner's standing line: the code
 # touches his everyday life.
 #
 # `free_lane` earns its place on the same test as the other three: it is REVERSIBLE. It kills
@@ -125,7 +125,7 @@ LOCK_STALE_SEC = 300
 FREE_LANE_SAMPLE_SEC = 6         # a fresh cpu sample, taken now, not read off the bundle
 CPU_EPS = 1.0                    # seconds of tree cpu that count as "it did something"
 
-# Whose LONE diagnosis may execute. Read, never written- arming is Atul's word, and
+# Whose LONE diagnosis may execute. Read, never written- arming is the owner's word, and
 # `baxter_doctor_ai_task.ps1` already refuses to install `-Mode once` without this file.
 ARMED_NAME = ".baxter_doctor_ai_armed.json"
 
@@ -173,7 +173,7 @@ BRIEF = (
     "below). Diagnose the single most likely fault and name ONE repair.\n\n"
     "'silence' is the unanswered-work section. 'unanswered' lists message ids that Baxter reacted "
     "to and then never answered- no handled claim, and no reply in the send ledger- aged from the "
-    "message id itself. A NON-EMPTY list means Baxter acknowledged Atul and went quiet: something "
+    "message id itself. A NON-EMPTY list means Baxter acknowledged the owner and went quiet: something "
     "in the reply path has stopped. An EMPTY list is the normal state and is not a fault.\n\n"
     "'lane_clog' is the build board. 'live' lanes are running, 'pending' entries are queued, "
     "'lane_count' is the maximum. 'clogged' is true only when every lane is occupied, work is "
@@ -470,7 +470,7 @@ def _first_object(text):
     An object nested in an ARRAY is refused outright. `[{"action":"restart_component",...},
     {"action":"reap_duplicate",...}]` is two proposals, and silently taking the first is
     exactly the guessing this module exists to refuse. The brief asks for a single object;
-    anything else goes to Atul.
+    anything else goes to the owner.
     """
     depth = 0
     start = -1
@@ -511,7 +511,7 @@ def parse_diagnosis(text):
     found nothing wrong answers `{"action": "none"}`- the brief demands exactly that- and gets
     verdict='none'. A doctor whose reply could not be read at all gets verdict=None. Both are
     unexecutable, but only the second is a fault: collapsing them made a healthy fleet report
-    'no parseable diagnosis' and ping Atul on every scheduled pass.
+    'no parseable diagnosis' and ping the owner on every scheduled pass.
     """
     out = {"action": None, "verdict": None, "target": None, "reason": None, "raw": text}
     if not isinstance(text, str) or not text.strip():
@@ -544,7 +544,7 @@ def parse_diagnosis(text):
 def armed_authority(vault=VAULT):
     """Whose LONE diagnosis may execute: 'codex', or None. Read, never written.
 
-    Atul asked for Codex to have full authority. That authority is a FILE- his word, recorded
+    the owner asked for Codex to have full authority. That authority is a FILE- his word, recorded
     with his own quote- and never a default. Both `mode=once` and `authority=codex` must be
     present. Absent or malformed yields today's behaviour exactly: consensus required.
     """
@@ -577,14 +577,14 @@ def cross_check(cx, jm, authority=None):
     needs all four: both parsed, both identical, action whitelisted, target not protected.
 
     'healthy' is the fleet's normal state and is SILENT: both doctors read the bundle and
-    found no fault. It is not a flag. Flagging it would ping Atul every scheduled pass of a
+    found no fault. It is not a flag. Flagging it would ping the owner every scheduled pass of a
     perfectly well machine, and the ping would say the doctors could not be parsed when in
     fact they answered clearly ([[no-ping-storms]]).
 
     `authority='codex'` (from `.baxter_doctor_ai_armed.json`) relaxes ONE thing: a lone
     parseable Codex diagnosis executes when Jem is SILENT- mute, unreadable, or reporting no
     fault. A Jem who parses and CONTRADICTS still flags: a silent Jem is Codex's authority, a
-    contradicting Jem is Atul's information. Jem alone never executes, armed or not.
+    contradicting Jem is the owner's information. Jem alone never executes, armed or not.
     """
     if cx.get("verdict") == "none" and jm.get("verdict") == "none":
         return "healthy", None, None, "both doctors report no fault"
@@ -603,7 +603,7 @@ def cross_check(cx, jm, authority=None):
             return ("flag", None, None, "no parseable diagnosis from %s"
                     % ("both doctors" if len(mute) == 2 else mute[0]))
         # One doctor sees a fault, the other sees none. That is not agreement, so nothing runs-
-        # and it is worth Atul's eye, because exactly one of them is wrong.
+        # and it is worth the owner's eye, because exactly one of them is wrong.
         (seer, sn), (bn,) = ((jm, "jem"), ("codex",)) if cx.get("action") is None \
             else ((cx, "codex"), ("jem",))
         return ("flag", None, None,
@@ -667,7 +667,7 @@ def _cd_blocked(path, key, cooldown_sec):
 # ============================================================================ 6. the executor
 def restart_plan(target):
     """What a restart WOULD do. Separated from doing it so the mapping can be tested without
-    reaping Atul's fleet- the sealed exam injects its own executor and never drives this path,
+    reaping the owner's fleet- the sealed exam injects its own executor and never drives this path,
     which is exactly why a typo'd component name would otherwise ship invisible."""
     name = _norm(target)
     if _is_protected(name):
@@ -881,7 +881,7 @@ def _default_executor(action, target, bundle):
 
 # ============================================================================= 7. the record
 def _default_flagger(reason, payload):
-    """Write the full record to the vault, then ONE line to Atul. Never outward."""
+    """Write the full record to the vault, then ONE line to the owner. Never outward."""
     try:
         with FLAGS_PATH.open("a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False) + "\n")

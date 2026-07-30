@@ -1,5 +1,5 @@
 """baxter_fast — the FAST LANE. Polled every ~15s by the watcher (independently of the
-main triage lock), it catches Atul's questions/commands and answers within ~a minute,
+main triage lock), it catches the owner's questions/commands and answers within ~a minute,
 while the heavy triage handles filing on its own schedule.
 
 Division of labour:
@@ -11,9 +11,9 @@ import json, os, re, subprocess, sys, time, urllib.request, uuid
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import baxter_lanes as lanes   # 3-lane concurrency + session ledger (Atul, 8th July)
+import baxter_lanes as lanes   # 3-lane concurrency + session ledger (the owner, 8th July)
 import baxter_rules as rules       # EVERY prompt rule, defined ONCE. Never retype one into a
-                                   # prompt here- that duplication was the bug (Atul, 9th July).
+                                   # prompt here- that duplication was the bug (the owner, 9th July).
                                    # It re-exports the reminder + channel-read rules too.
 import baxter_send_dedup as dedup  # THE one cross-process locking scheme. The shared claim
                                    # ledger (.baxter_fast_handled.json) is written by this lane
@@ -26,7 +26,7 @@ import baxter_usage as gov         # queue_read/enqueue/position_line. Imported,
                                    # at import (baxter_triage imports it the same way).
 import baxter_autobuild as autobuild   # the voiceless denial sink- see _send_ack()
 import baxter_siblings as siblings     # THE addressed-to check, shared with the
-                                       # listener. A message Atul sent to Codex/Jem
+                                       # listener. A message the owner sent to Codex/Jem
                                        # is not this lane's to queue, ack or answer.
 REPLY_WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "baxter_reply_worker.py")
 
@@ -34,7 +34,7 @@ VAULT = r"C:\Users\you\Documents\Baxter"
 SECRETS = os.path.join(VAULT, ".baxter_secrets.json")
 CURSOR = os.path.join(VAULT, ".baxter_fast_cursor.json")
 HANDLED = os.path.join(VAULT, ".baxter_fast_handled.json")
-REACTED = os.path.join(VAULT, ".baxter_fast_reacted.json")   # 👀 WORK-START receipts sent (Atul, 8th July: fires when work begins, not on sight)
+REACTED = os.path.join(VAULT, ".baxter_fast_reacted.json")   # 👀 WORK-START receipts sent (the owner, 8th July: fires when work begins, not on sight)
 # Receipts: message_id -> the queue entry written for it, BEFORE any 'queued' reply went out.
 # The triage reconciler reads these back and pings if a 'queued' claim has none behind it.
 ACKS = os.path.join(VAULT, ".baxter_queue_acks.json")
@@ -43,8 +43,8 @@ SAY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_say.py"
 
 # /usage is handled by its OWN orthogonal poller now (baxter_usage_cmd.py, 6th July v2)-
 # a pure state-file read + reply, decoupled from this fast lane's 240s FLOCK so it can
-# never wait on a slow claude quick-reply the way v1 did (the ~2-min hang Atul hit).
-# /off and /on are the master pause switch (Atul, 6th July): /off drops a flag that makes
+# never wait on a slow claude quick-reply the way v1 did (the ~2-min hang the owner hit).
+# /off and /on are the master pause switch (the owner, 6th July): /off drops a flag that makes
 # the main triage soft-pause (no briefs, pings, filing or background work); /on clears it.
 # The fast lane itself keeps running so /on and his questions always land. Pure code path.
 OFF_CMD = re.compile(r"^/?off$", re.I)
@@ -105,11 +105,11 @@ LIVE = os.path.join(VAULT, ".baxter_usage_live.json")
 USAGE = r"C:\Users\you\Documents\Python Scripts\utils\baxter_usage.py"
 BOT_ID = "333333333333333302"
 
-# A BIG/sizeable ask (Atul, 6th July "wall behaviour" clarification)- a build/research/
+# A BIG/sizeable ask (the owner, 6th July "wall behaviour" clarification)- a build/research/
 # design job that must NOT be run live at the wall. When big work is gated (the 70-90
 # band) these get a zero-cost templated 'logged, addressed after reset' ack + go high on
 # the build queue, instead of burning a live claude reply. Deliberately CONSERVATIVE:
-# a small ask wrongly acked reads as the "shell" Atul hates, so lean small when unsure
+# a small ask wrongly acked reads as the "shell" the owner hates, so lean small when unsure
 # (a false live answer is cheap; a false ack is not). Quick questions never match this.
 BIG_ASK = re.compile(
     r"\b(build|rebuild|implement|develop|set ?up|wire ?up|integrate|migrate|refactor|automate|architect)\b"
@@ -151,20 +151,20 @@ VITAL_EXEMPT = re.compile(
 # A question ABOUT the build queue/list itself ("what's on the build list?", "what are
 # you building?", "anything in the queue?") trips BIG_ASK's bare noun "build"/"task"- but
 # it's a QUICK question, not a big ask. Exclude it so it falls through to a LIVE answer,
-# never a false ack + junk queue entry (Atul's 6th-July false-ack warning- caught
+# never a false ack + junk queue entry (the owner's 6th-July false-ack warning- caught
 # "What's on the build list baxter?" wrongly acked + queued at p3, 10:37). Failure mode is
 # safe by design: a rare legit big ask worded as "build a task queue" gets answered live
-# instead of acked- exactly the conservative "lean small when unsure" bias Atul wants.
+# instead of acked- exactly the conservative "lean small when unsure" bias the owner wants.
 QUEUE_Q = re.compile(
     r"\b(build|task|to-?do)\s*(list|queue|order|status|backlog)\b"   # "build list", "task queue"
     r"|\b(on|in)\s+(the|your|my)\s+(list|queue|backlog)\b"           # "on the list", "in the queue"
     r"|\bwhat('?s| is| are|s)?\b[^?]{0,40}\bbuilding\b",             # "what are you building"
     re.I)
 
-# NON-TASK GUARD for the big-ask auto-queue (Atul, 6th July- the fast lane wrongly queued a
+# NON-TASK GUARD for the big-ask auto-queue (the owner, 6th July- the fast lane wrongly queued a
 # Claude app-download/onboarding message as a p3 build task, removed). A message can trip
 # BIG_ASK's verbs ("set up", "integrate"...) while being SYSTEM/ONBOARDING chatter, an
-# app-download blurb, a paste, or quoted output- NOT a genuine build ask Atul is handing
+# app-download blurb, a paste, or quoted output- NOT a genuine build ask the owner is handing
 # Baxter. Before --queue'ing a sizeable request, require it to read like a real instruction
 # and reject non-actionable content. Conservative by design: a rejected message is simply
 # dropped from the AUTO-QUEUE- it still gets the wall catch-all ack / live lane / triage, so
@@ -182,7 +182,7 @@ NON_TASK = re.compile(
 def _is_non_task(content):
     """True when a BIG_ASK-tripping message is NOT a genuine build/work ask but system/
     onboarding/app-download text, a paste, or quoted output- so it must NOT be auto-queued
-    (Atul, 6th July). Conservative: rejecting only drops it from the queue; the wall
+    (the owner, 6th July). Conservative: rejecting only drops it from the queue; the wall
     catch-all / live lane / triage still see it, so nothing is lost."""
     c = (content or "").strip()
     if not c:
@@ -190,7 +190,7 @@ def _is_non_task(content):
     if NON_TASK.search(c):
         return True
     # quoted output / forwarded paste: half-or-more of the non-blank lines are Discord
-    # block-quotes ('> ...')- Atul's own instructions aren't written as quote lines.
+    # block-quotes ('> ...')- the owner's own instructions aren't written as quote lines.
     lines = [ln for ln in c.splitlines() if ln.strip()]
     if lines and sum(1 for ln in lines if ln.lstrip().startswith(">")) >= max(2, len(lines) * 0.5):
         return True
@@ -205,7 +205,7 @@ def _is_non_task(content):
     return False
 
 def _breach_active():
-    """Atul's gold-spend authorisation (the /breach command)- a future 'until' lifts
+    """the owner's gold-spend authorisation (the /breach command)- a future 'until' lifts
     even the 90% hard floor, so the fast lane answers normally above 90 during a breach."""
     try:
         with open(BREACH_FLAG, encoding="utf-8-sig") as f:
@@ -215,7 +215,7 @@ def _breach_active():
         return False
 
 def _floor_active():
-    """The fast lane is VITAL (answering Atul)- in the 4-tier governor it RUNS through
+    """The fast lane is VITAL (answering the owner)- in the 4-tier governor it RUNS through
     the 80-90 vital-only band and stops ONLY at the 90%+ HARD FLOOR, where it sends a
     zero-cost templated 'please wait' ack (NO llm burn) instead of a claude quick-reply.
     A breach lifts even the floor. Instant, network-free read of the governor's flag."""
@@ -239,7 +239,7 @@ def _reset_clock():
         return ""
 
 def _floor_ack():
-    """The locked zero-cost hard-floor ack (Atul's 6th-July spec)- one butler line, no
+    """The locked zero-cost hard-floor ack (the owner's 6th-July spec)- one butler line, no
     LLM, no probe. Reads the baked reset clock from .baxter_usage_live.json if present."""
     when = _reset_clock()
     return (f"\U0001F6D1 At the wall, sir- usage is in the top 10% reserve, so I'm holding "
@@ -247,7 +247,7 @@ def _floor_ack():
             f"genuinely can't wait.")
 
 def _big_ack(position):
-    """Zero-cost templated ack for a BIG ask while gated (Atul's 6th-July wall spec):
+    """Zero-cost templated ack for a BIG ask while gated (the owner's 6th-July wall spec):
     logged + queued high, addressed after the window resets. No LLM burn- that's the
     whole point (token conservation on big asks). Reassures him small asks still land
     live, so the wall reads as selective, never a shell.
@@ -282,7 +282,7 @@ def _is_vital(m):
 
 
 def _is_big_ask(m, uid):
-    """One definition of 'a sizeable ask from Atul that the fast lane must not answer'.
+    """One definition of 'a sizeable ask from the owner that the fast lane must not answer'.
 
     It used to be an inline comprehension inside the `if _big_gated()` branch, which is why
     the queueing only ever happened at the wall. The band decides whether he gets a
@@ -314,7 +314,7 @@ def _is_big_ask(m, uid):
 def _placeholder(m, gated, vital=False):
     """Write the queue entry FIRST. Returns the entry, or None if the write failed.
 
-    THE FIX (Atul, 9th July 09:38). The ack must not precede the act. Every path that is
+    THE FIX (the owner, 9th July 09:38). The ack must not precede the act. Every path that is
     about to tell him something is queued- the templated wall ack, and the live worker's
     reply via its prompt- goes through here first, so the entry exists before the sentence
     describing it does. Keyed on the message id, so triage's later, better-worded filing
@@ -333,7 +333,7 @@ def _placeholder(m, gated, vital=False):
     # The room he asked in, straight off the message. Every Discord message object carries
     # `channel_id`; the lane that eventually builds this reads it back off the entry and
     # answers THERE. Without it the finished build reached for baxter_say's `general` default
-    # and answered in the wrong channel (Atul, 9th July 17:38).
+    # and answered in the wrong channel (the owner, 9th July 17:38).
     cid = str(m.get("channel_id") or "")
     try:
         return gov.enqueue(
@@ -342,7 +342,7 @@ def _placeholder(m, gated, vital=False):
             # it wears UNSCOPED_TAG, serialises against other unscoped entries, and runs beside
             # live builds. That is only safe while its first pass EDITS NOTHING- so the pass has
             # to be told so, in the field the builder prompt renders verbatim.
-            "Big ask from Atul, UNSCOPED. This pass SCOPES ONLY- edit no source file. Read the "
+            "Big ask from the owner, UNSCOPED. This pass SCOPES ONLY- edit no source file. Read the "
             "ask, write its PRD, then declare the real touch-set with `baxter_usage.py --edit "
             "<id> --touch \"<paths>\"` (or --solo if it genuinely rewrites a hub file) and STOP. "
             "A later lane builds it against that declaration.",
@@ -351,7 +351,7 @@ def _placeholder(m, gated, vital=False):
             # are different locks now (see baxter_usage.SOLO_LOCK / UNSCOPED_TAG). A p5
             # placeholder that needed an empty fleet to earn a lane simply starved.
             #
-            # A vital goes to p1 (Atul-says-first). It is the only priority consistent with
+            # A vital goes to p1 (the owner-says-first). It is the only priority consistent with
             # never parking it: a crash queued behind the ordinary backlog has been parked in
             # everything but name.
             priority=1 if vital else (3 if gated else 5), touch_set=[], solo=False,
@@ -399,7 +399,7 @@ def pre_enqueue(msgs, uid, gated):
     """Write every sizeable ask to the build queue BEFORE anything says a word about it.
     Returns {message_id: 'position N of M, pP'} for the replies that follow.
 
-    Atul, 9th July 09:38- the fix this file exists to carry. A sizeable ask is written here,
+    the owner, 9th July 09:38- the fix this file exists to carry. A sizeable ask is written here,
     in code, the moment it is seen: before the templated wall ack goes out, and before any
     live worker is woken to talk about it. Whatever is said afterwards describes an entry
     that already exists.
@@ -419,7 +419,7 @@ def pre_enqueue(msgs, uid, gated):
       2. READ every slot, once, off the settled queue.
       3. SPEAK- ack the ones the wall is holding.
     Reading a slot in pass 1 would print a number the next write immediately invalidates."""
-    # `not siblings.message_for_sibling(...)`: a build ask Atul sent to CODEX is not a build ask
+    # `not siblings.message_for_sibling(...)`: a build ask the owner sent to CODEX is not a build ask
     # for Baxter. Before 11th July this list saw only `_is_big_ask`, so `<@codex> build me X`
     # was written to Baxter's queue and wall-acked as his own- junk work, from a message that
     # was never his. The listener claims a stood-back message too, so in the live fleet this
@@ -528,7 +528,7 @@ def pre_enqueue_one(m, uid, gated):
 
 
 def _override_active():
-    """Atul's --override (big-task breach): a future 'until' lifts the 70-80 big stop.
+    """the owner's --override (big-task breach): a future 'until' lifts the 70-80 big stop.
     Does NOT lift the 80-90 vital-only wall. Network-free read of the flag."""
     try:
         with open(OVERRIDE_FLAG, encoding="utf-8-sig") as f:
@@ -552,7 +552,7 @@ def _big_gated():
         return False
     if level == "routine":          # 80-90 vital-only: big paused (override does NOT lift)
         return True
-    if level == "big":              # 70-80: big paused unless Atul authorised an override
+    if level == "big":              # 70-80: big paused unless the owner authorised an override
         return not _override_active()
     return False
 
@@ -569,7 +569,7 @@ def _routine_gated():
         return False
 
 def _noted_ack():
-    """Zero-cost catch-all ack (Atul, 6th July gap-fix): a plain instruction sent while
+    """Zero-cost catch-all ack (the owner, 6th July gap-fix): a plain instruction sent while
     triage is gated has NO other lane- without this it sits in silence till the reset.
     One butler line, no LLM, no probe. The durable filing still happens later (the msg is
     marked fast-handled, so triage files it but doesn't re-reply)."""
@@ -591,7 +591,7 @@ def _stale_for_live(m):
     """True when a message is the live session's turf (@mention/reply-to-bot) but has gone
     UNANSWERED past LIVE_MISS_SECS- i.e. the live session was floored, restarting, or had
     dropped its gateway when it arrived, and it never replays old events. The fast lane then
-    picks it up so Atul is never left hanging on an @mention (8th-July gap: 4 @mentions sent
+    picks it up so the owner is never left hanging on an @mention (8th-July gap: 4 @mentions sent
     at the 90% floor got orphaned). The atomic send-dedup guarantees no double if the live
     session later answers too, so rescuing is always safe."""
     if not _for_live_session(m):
@@ -604,7 +604,7 @@ def _stale_for_live(m):
     except Exception:
         return False
 
-# Codex/coop machinery REMOVED IN FULL (Atul, 8th July- "remove every tendril, completely
+# Codex/coop machinery REMOVED IN FULL (the owner, 8th July- "remove every tendril, completely
 # uncouple the two"). No coop constants, no coop worker, no handoff drain, no codex exec-
 # the former coop channel is just a normal channel served by the standard listener.
 
@@ -614,8 +614,8 @@ def _api_get(path, tok):
     return json.loads(urllib.request.urlopen(req, timeout=15).read().decode())
 
 def _reply_parent(m, ch, tok):
-    """When Atul used Discord's REPLY feature, the message he replied to IS the context
-    (Atul, 8th July- the worker was binding to recent chatter instead of the referenced
+    """When the owner used Discord's REPLY feature, the message he replied to IS the context
+    (the owner, 8th July- the worker was binding to recent chatter instead of the referenced
     message and answered the wrong topic, ticking the wrong thing). Returns a block to PIN
     as PRIMARY context above the recent-chatter convo, or '' if this isn't a reply.
     Discord embeds the parent as `referenced_message`; if that's absent but a
@@ -634,16 +634,16 @@ def _reply_parent(m, ch, tok):
     if not ref:
         return ""
     a = ref.get("author") or {}
-    who = "Baxter (you)" if a.get("bot") else (a.get("username") or "Atul")
+    who = "Baxter (you)" if a.get("bot") else (a.get("username") or "the owner")
     text = (ref.get("content") or "").replace("\n", " / ").strip()[:600]
     if not text:
         return ""
-    return ("REPLY TARGET- Atul used Discord's reply feature ON THIS message, so it is what "
+    return ("REPLY TARGET- the owner used Discord's reply feature ON THIS message, so it is what "
             "he is responding to. ANCHOR your answer to it, NOT the recent chatter below:\n"
             f"  {who}: \"{text}\"\n\n")
 
 def _react(ch, mid, emoji, tok):
-    """PUT a reaction on a message (idempotent). Used for the 👀 on-read receipt so Atul
+    """PUT a reaction on a message (idempotent). Used for the 👀 on-read receipt so the owner
     sees, the instant he sends, that his message has been read and is being worked."""
     import urllib.parse
     url = (f"https://discord.com/api/v10/channels/{ch}/messages/{mid}"
@@ -689,7 +689,7 @@ def _fire_usage_cmd():
 def _fast_prompt(body, mid, convo="", pin="", queued="", cid=None):
     """The fast lane's worker prompt. A real function, not an f-string buried in main(),
     so baxter_rules.check() can render it every triage pass and fail loudly the moment it
-    stops carrying the shared rules block (Atul, 9th July: "I need a permanent fix").
+    stops carrying the shared rules block (the owner, 9th July: "I need a permanent fix").
 
     `queued` is the ALREADY QUEUED block for a big ask whose placeholder this process has
     just written- the worker's only job there is to state the slot it is given. It is empty
@@ -697,11 +697,11 @@ def _fast_prompt(body, mid, convo="", pin="", queued="", cid=None):
 
     `cid` is the channel the message arrived in. It reaches rules.reply_via(), which then names
     the channel on the reply command. Omitted, reply_via drops --channel and baxter_say.main()
-    falls back to channel_key='general'- which is how a question Atul asked in
+    falls back to channel_key='general'- which is how a question the owner asked in
     #deadlock-research was answered in #general. baxter_slash always passed it; this lane never
     did. Never let it default again."""
     return (
-        f"You are Baxter, Atul's butler-assistant. His Obsidian vault is {VAULT} "
+        f"You are Baxter, the owner's butler-assistant. His Obsidian vault is {VAULT} "
         f"(00-Inbox + 20-Projects hold tasks as '- [ ] ...' lines with #project tags and "
         f"due dates like \U0001F4C5 2026-07-04; 40-Drafts holds drafts; Subscriptions.md money). "
         f"{pin}"
@@ -719,11 +719,11 @@ def _fast_prompt(body, mid, convo="", pin="", queued="", cid=None):
 
 
 def stand_back(msgs, uid, ch, tok):
-    """Stamp the handsoff on every message Atul addressed to Codex or Jem, then claim it.
+    """Stamp the handsoff on every message the owner addressed to Codex or Jem, then claim it.
 
     The listener stamps these the instant they land; this is the same rule on the poll's side,
     so a message that arrived while the gateway was down still carries a mark. Zero reactions is
-    what a dead Baxter looks like, and standing back must never read as that (Atul, 11th July).
+    what a dead Baxter looks like, and standing back must never read as that (the owner, 11th July).
     React FIRST, claim second: a failed PUT still claims, so a cosmetic loss can never re-open
     the reply path. Returns the ids claimed."""
     stood = [m for m in _drop_handled(list(reversed(msgs)))
@@ -742,7 +742,7 @@ def main():
     # single flight for the fast lane itself
     if os.path.exists(FLOCK) and time.time() - os.path.getmtime(FLOCK) < 240:
         return
-    # 4-tier governor: the fast lane is VITAL, so it RUNS the 80-90 band (answers Atul
+    # 4-tier governor: the fast lane is VITAL, so it RUNS the 80-90 band (answers the owner
     # normally). At the 90%+ HARD FLOOR it stays alive but answers with a zero-cost
     # templated ack (no claude) instead of going silent- computed per-message below.
     floor = _floor_active()
@@ -762,14 +762,14 @@ def main():
         msgs = json.loads(urllib.request.urlopen(req, timeout=15).read().decode())
         if not msgs:
             return
-        # advance cursor over EVERYTHING seen (bot posts too), respond only to Atul's responsive msgs
+        # advance cursor over EVERYTHING seen (bot posts too), respond only to the owner's responsive msgs
         newest = max(int(m["id"]) for m in msgs)
         first_run = ch not in cur
         cur[ch] = str(newest)
         json.dump(cur, open(CURSOR, "w", encoding="utf-8"))
         if first_run:
             return                      # initialise silently - no history replay
-        # ---- 👀 WORK-START RECEIPT moved to the reply loop (Atul, 8th July clarification).
+        # ---- 👀 WORK-START RECEIPT moved to the reply loop (the owner, 8th July clarification).
         # His semantics: 👀 means 'on it now', NOT 'seen it'. The old react HERE fired on mere
         # poll/sight (for live-session @mentions) before any work- exactly the 'former' behaviour
         # he rejected. Now: the live session reacts on its OWN work-start for @mentions, and this
@@ -810,14 +810,14 @@ def main():
             slash_done.add(str(m["id"])); slash_newly.append(str(m["id"]))
         if slash_newly:
             _claim_handled(slash_newly)
-        # ---- STAND BACK from anything Atul addressed to Codex or Jem (11th July). Must precede
+        # ---- STAND BACK from anything the owner addressed to Codex or Jem (11th July). Must precede
         # pre_enqueue and both ack passes below- a message queued or "noted, banked" is a
         # message answered.
         stand_back(msgs, uid, ch, tok)
         # ---- BIG-ASK PRE-ENQUEUE, EVERY BAND. The act before the ack; see pre_enqueue().
         # message_id -> 'position 3 of 27, p5', for the wall ack and the worker's prompt.
         positions = pre_enqueue(msgs, uid, _big_gated())
-        # ---- CATCH-ALL AT THE WALL (Atul, 6th July gap-fix): at 80%+ triage is paused, so
+        # ---- CATCH-ALL AT THE WALL (the owner, 6th July gap-fix): at 80%+ triage is paused, so
         # a plain instruction- not a question/command (RESPONSIVE), not a build-verb big-ask
         # (BIG_ASK), not an @mention/reply (live session)- has NO lane and would sit in
         # silence till reset. Give it a zero-cost 'noted, banked' ack + mark handled (triage
@@ -874,7 +874,7 @@ def main():
         to_process = [m for m in to_process if str(m["id"]) in won]
         if not to_process:
             return
-        # chronology fix (Atul, 4th July): answer as a TURN in the conversation, not a
+        # chronology fix (the owner, 4th July): answer as a TURN in the conversation, not a
         # cold read - the cursor fetch above only holds NEW messages, no Baxter replies.
         convo = ""
         try:
@@ -892,7 +892,7 @@ def main():
         except Exception:
             pass
         # HARD FLOOR (>=90%): answer with the locked zero-cost templated ack, no claude
-        # burn- Atul is never met with silence, but the top 10% reserve is protected.
+        # burn- the owner is never met with silence, but the top 10% reserve is protected.
         if floor:
             ack = _floor_ack()
             for m in to_process:
@@ -906,7 +906,7 @@ def main():
         reacted = dedup.read_ids(REACTED)
         for m in to_process:            # stale rescues first, max 5 per sweep
             body = m["content"][:1500]
-            # 👀 WORK-START receipt (Atul, 8th July): we're about to actually work this message-
+            # 👀 WORK-START receipt (the owner, 8th July): we're about to actually work this message-
             # react now, not on sight. Deduped via the shared ledger so the listener + this poll
             # never double-hit the API (add_reaction is idempotent regardless).
             if str(m["id"]) not in reacted and _react(ch, str(m["id"]), "\U0001F440", tok):
@@ -918,7 +918,7 @@ def main():
             # stamps ⚙️ when its Claude turn begins and drops it when the turn ends, so a cog is
             # present ONLY while a session is genuinely working. baxter_say still drops it + adds
             # ✅ on the delivered reply, and baxter_reaction_watch reaps any stray cog.
-            pin = _reply_parent(m, ch, tok)   # PRIMARY: the message Atul actually replied to
+            pin = _reply_parent(m, ch, tok)   # PRIMARY: the message the owner actually replied to
             # A big ask has already had its placeholder written above, so the worker is told
             # the slot rather than asked to create one. A big ask whose write FAILED gets the
             # blunt refusal block instead ("you may not write 'queued'")- never a bare ack.
@@ -927,7 +927,7 @@ def main():
             qblock = (rules.queued_block(positions.get(str(m["id"]), ""), body)
                       if _is_big_ask(m, uid) else "")
             prompt = _fast_prompt(body, m["id"], convo, pin, qblock, cid=ch)
-            # 3-LANE CONCURRENCY (Atul, 8th July): spawn a DETACHED, lane-bounded worker
+            # 3-LANE CONCURRENCY (the owner, 8th July): spawn a DETACHED, lane-bounded worker
             # per message instead of a blocking serial claude run- so up to 3 #general
             # quick-replies fan out in parallel rather than queueing behind one another.
             # #general is per-task, so each gets a FRESH session; record it so a later

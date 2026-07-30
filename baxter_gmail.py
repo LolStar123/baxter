@@ -1,6 +1,6 @@
 """baxter_gmail — full Gmail WRITE-side parity across ALL accounts over IMAP.
 
-Why this exists (Atul, 6th July 2026): the hosted Claude Gmail bridge only wires
+Why this exists (the owner, 6th July 2026): the hosted Claude Gmail bridge only wires
 label/draft/sensitive-label tools to alice.personal. Reading was already universal
 (IMAP covers all three inboxes), but swagg + company were second-class on the write
 side. This makes every account equal- no bridge-only account, nothing sacrificed.
@@ -15,7 +15,7 @@ the bridge write-tools do:
 A "sensitive" label is just a Gmail label- IMAP applies any label identically, so
 there is no capability the bridge has that this lacks.
 
-Accounts (aliases): main/atul1 -> alice.personal, swagg -> alice.spam,
+Accounts (aliases): main/owner1 -> alice.personal, swagg -> alice.spam,
 company -> alice.business, all -> every account.
 
 Commands:
@@ -29,7 +29,7 @@ Commands:
                  [--cc C] [--in-reply-to MSGID] [--account X]
   drafts         [--account X]                          list drafts
 
---account defaults to atul1 for write ops (safety) and to all for read ops.
+--account defaults to owner1 for write ops (safety) and to all for read ops.
 Add --json for machine-readable output. Nothing is ever sent- drafts only.
 Nothing is hard-deleted- unlabel just removes a label.
 """
@@ -52,7 +52,7 @@ ALL_MAIL = '"[Gmail]/All Mail"'
 DRAFTS = '"[Gmail]/Drafts"'
 
 ALIASES = {
-    "main": "alice.personal", "atul1": "alice.personal", "alice.personal": "alice.personal",
+    "main": "alice.personal", "owner1": "alice.personal", "alice.personal": "alice.personal",
     "swagg": "alice.spam", "alice.spam": "alice.spam",
     "company": "alice.business", "alice.business": "alice.business",
 }
@@ -83,7 +83,7 @@ def _resolve(account):
     for addr, pw in accts:
         if addr.lower() == account.lower():
             return [(addr, pw)]
-    sys.exit(f"unknown account '{account}'- known: main/atul1, swagg, company, all")
+    sys.exit(f"unknown account '{account}'- known: main/owner1, swagg, company, all")
 
 
 def _connect(addr, pw):
@@ -184,7 +184,7 @@ def cmd_labels(args):
 
 
 def cmd_create_label(args):
-    for addr, pw in _resolve(args.account or "atul1"):
+    for addr, pw in _resolve(args.account or "owner1"):
         M = _connect(addr, pw)
         typ, resp = M.create(args.name)
         M.logout()
@@ -248,7 +248,7 @@ def _apply_label(add, args):
         sys.exit("label/unlabel needs --query <gmail search> or --uid <uid[,uid]>")
     op = "+X-GM-LABELS" if add else "-X-GM-LABELS"
     larg = _label_arg([args.label])
-    for addr, pw in _resolve(args.account or "atul1"):
+    for addr, pw in _resolve(args.account or "owner1"):
         M = _connect(addr, pw)
         M.select(ALL_MAIL)  # writable
         if args.uid:
@@ -287,7 +287,7 @@ def cmd_draft(args):
         body = Path(args.body_file).read_text(encoding="utf-8")
     if body is None:
         sys.exit("draft needs --body or --body-file")
-    for addr, pw in _resolve(args.account or "atul1"):
+    for addr, pw in _resolve(args.account or "owner1"):
         msg = MIMEText(body, "plain", "utf-8")
         msg["From"] = addr
         msg["To"] = args.to

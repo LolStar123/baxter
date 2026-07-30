@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The PRD template for the build queue, and the machine that refuses a bad one.
 
-Atul, 9th July 09:47: "when something is judged worth building, a separate Claude
+the owner, 9th July 09:47: "when something is judged worth building, a separate Claude
 instance acts as product manager and fills out a rigorous PRD before the item is
 filed". The design note is `50-Research/PRD template for the build queue - first pass.md`;
 this module is that note made enforceable.
@@ -48,7 +48,7 @@ PRD_DIR = VAULT / "60-PRDs"
 # The eleven sections, by number. The heading TEXT is advisory; the NUMBER is the contract,
 # so a PM that renames "Solution" to "Solution + UX" is not punished for prose.
 #
-# 5. Visualisation was inserted on 9th July (Atul's own words for the ask: "user problem,
+# 5. Visualisation was inserted on 9th July (the owner's own words for the ask: "user problem,
 # solution, visualisation, affected codebase regions, edge cases"). It sits next to the
 # Solution because it is the Solution seen from his chair, and inserting it there renumbered
 # 5-10 into 6-11. Nothing outside this module and `baxter_pm_delegate` reads a section by
@@ -101,7 +101,7 @@ def _log(msg):
 TEMPLATE = r"""# PRD: <one-line imperative title- this becomes the queue's task text>
 
 ## 1. Origin
-- Requested by: <Atul, verbatim quote + timestamp | Baxter's own judgement>
+- Requested by: <the owner, verbatim quote + timestamp | Baxter's own judgement>
 - Raw ask: "<his exact words, unparaphrased>"
 - Date: <ordinal, e.g. 9th July>
 
@@ -124,7 +124,7 @@ behaviour. Why THIS solution and not the two you discarded. The happy path, step
 - <why this shape, and what you rejected>
 
 ## 5. Visualisation
-What Atul SEES, and what the thing looks like in use. Draw it: the literal line that lands
+What the owner SEES, and what the thing looks like in use. Draw it: the literal line that lands
 in Discord, the shape of the log row, the columns of the table, the state file after a run.
 "He sees nothing" is a valid answer- write it as such, and say what changes instead. A
 solution nobody can picture has not been designed, only described.
@@ -165,7 +165,7 @@ A multi-line command silently runs only its first line and passes, so it must be
 
 ## 10. Priority + gate
 - priority: <1-8> - <one-line justification>
-- gated_on: <atul, if it acts outward, destroys data, or needs a decision only he can
+- gated_on: <owner, if it acts outward, destroys data, or needs a decision only he can
   make; otherwise none. Prose like "do not auto-run" does nothing- the field is the gate>
 - next step: <the first concrete thing the builder does>
 
@@ -189,7 +189,7 @@ def render_template():
 EXAMPLE_PRD = r"""# PRD: PRD-gated build queue- a PM Claude writes the spec and a manager greenlights it
 
 ## 1. Origin
-- Requested by: Atul, 9th July 09:47
+- Requested by: the owner, 9th July 09:47
 - Raw ask: "when we judge something worth building, i want a separate claude instance
   to be a product manager and fill out a rigorous prd before it gets filed. opus 4.8,
   it needs to be a clever bot. first design the prd format itself in detail- edge cases,
@@ -229,7 +229,7 @@ before it starts editing the fleet, and the queue's failure mode is under-specif
   Solution is the right one- no regex reads those. A second model can. It answers one of
   three words: `greenlight`, `changes` (its reasons go back to the PM as a retry), or
   `reject` (the build should not happen at all). The rejected alternatives were a human
-  gate, which is Atul doing the machine's job, and a second validator pass, which would
+  gate, which is the owner doing the machine's job, and a second validator pass, which would
   only re-count what was already counted.
 
 ## 5. Visualisation
@@ -282,7 +282,7 @@ before it starts editing the fleet, and the queue's failure mode is under-specif
   three are append-only; the vault's git auto-backup is the backstop.
 
 ## 10. Priority + gate
-- priority: 1 - Atul asked for it directly and put it at position 1 of 32.
+- priority: 1 - the owner asked for it directly and put it at position 1 of 32.
 - gated_on: none
 - next step: write the template module, then the delegate, then the PRD store.
 
@@ -467,12 +467,12 @@ def validate_prd(text, triviality_check=False, triviality_timeout=TRIVIALITY_TIM
                       "'none' is not an answer, scope creep in a lane is invisible")
 
     # 5. Visualisation- an ERROR, not a warning. A build nobody can picture is a build whose
-    # effect on Atul was never decided; the PM writes it down or the PRD is not fileable.
+    # effect on the owner was never decided; the PM writes it down or the PRD is not fileable.
     # An empty section is the common failure, so a present-but-unfilled heading fails here
     # exactly as a missing one fails the section count above.
     vis = [b for b in _bullets(sec.get(S_VISUALISATION, "")) if _filled(b)]
     if S_VISUALISATION in sec and len(vis) < MIN_VISUALISATION:
-        errors.append(f"section {S_VISUALISATION} Visualisation is empty- write what Atul "
+        errors.append(f"section {S_VISUALISATION} Visualisation is empty- write what the owner "
                       "SEES, or write plainly that he sees nothing and what changes instead")
 
     # 6. Edge cases- at least five, each an arrow rule.
@@ -589,7 +589,7 @@ def selftest():
     assert any("edge case" in x.lower() for x in e5), e5
 
     # 5b. Visualisation is an ERROR, both ways: cut the section out entirely, and empty it.
-    #     Atul named it in the ask ("user problem, solution, visualisation, ..."), so a PRD
+    #     the owner named it in the ask ("user problem, solution, visualisation, ..."), so a PRD
     #     that cannot say what he SEES is not fileable.
     gone = re.sub(r"(?ms)^##\s*5\.\s*Visualisation.*?(?=^##\s*\d+\.)", "", EXAMPLE_PRD)
     assert gone != EXAMPLE_PRD, "the Visualisation section did not strip"

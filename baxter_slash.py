@@ -1,6 +1,6 @@
 """baxter_slash - NATIVE Discord slash commands (/usage, /on, /off).
 
-Atul, 6th July: typed "/off"/"/on" text commands can silently fail with no feedback-
+the owner, 6th July: typed "/off"/"/on" text commands can silently fail with no feedback-
 he wants REAL Discord slash commands (autocomplete + guaranteed instant confirmation).
 This is a tiny gateway bot (discord.py) that ONLY handles slash-command interactions-
 it ignores messages entirely (the claude --channels session still owns the chat), so
@@ -31,7 +31,7 @@ from pathlib import Path
 # ---- HEADLESS SELFTEST BOOTSTRAP- must precede `import discord` --------------------
 # A `--selftest*` flag is run as plain `python baxter_slash.py --selftest-...`, and the
 # `python` on PATH is 3.11, which has NO discord.py. The bot itself runs on 3.12, where it
-# is installed. So re-exec into the interpreter that actually serves Atul rather than
+# is installed. So re-exec into the interpreter that actually serves the owner rather than
 # skipping the import and testing a stand-in: a green selftest on the wrong runtime is the
 # exact failure [[trust-but-verify-always]] exists for (9th July: the fast lane verified
 # clean while the resident listener served the old code).
@@ -67,13 +67,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import baxter_fast as bf
 import baxter_send_dedup as dedup  # THE one cross-process locking scheme. Every claim-ledger
                                    # write below goes through it- see _claim().
-import baxter_lanes as lanes   # 3-lane concurrency + session ledger (Atul, 8th July)
+import baxter_lanes as lanes   # 3-lane concurrency + session ledger (the owner, 8th July)
 import baxter_siblings as siblings  # THE addressed-to check, shared with the fast lane
 import baxter_usage as gov     # the governor: queue_read/queue_write/lane helpers. IMPORTED,
                                # never reimplemented- run order lives in gov._qkey alone, and a
                                # second copy of it here would be the next build-queue bug.
 import baxter_rules as rules       # EVERY prompt rule, defined ONCE. Never retype one into a
-                                   # prompt here- that duplication was the bug (Atul, 9th July).
+                                   # prompt here- that duplication was the bug (the owner, 9th July).
                                    # It re-exports the reminder + channel-read rules too.
 
 REPLY_WORKER = str(Path(__file__).resolve().parent / "baxter_reply_worker.py")
@@ -93,14 +93,14 @@ GUILD_ID = 111111111111111111
 TOKEN = "" if _SELFTEST else json.loads(SECRETS.read_text(encoding="utf-8-sig"))["discord_bot_token"]
 
 # ---- REAL-TIME EVENT-DRIVEN LISTENER (7 Jul) --------------------------------------
-# Atul wants an INSTANT reply in EVERY channel- no polling. This gateway connection (the
+# the owner wants an INSTANT reply in EVERY channel- no polling. This gateway connection (the
 # SAME one that serves the slash commands, still the ONLY 2nd connection on the Baxter
 # token beside the live plugin session) now also fires on_message and dispatches in real
 # time. De-dup is the top priority: the live plugin session owns @mentions in its 3 plugin
 # channels; this listener owns everything else. Every reply still funnels through baxter_say
 # -> baxter_send_dedup (atomic, keyed on channel+reply_to, 5h), so even a race can never
 # post twice.
-ATUL_ID = 333333333333333301                       # discord_only_user_id- the sole human served
+OWNER_ID = 333333333333333301                       # discord_only_user_id- the sole human served
 ACCESS_JSON = Path(r"C:\Users\you\.claude\channels\discord\access.json")   # plugin-owned groups (READ-ONLY)
 SAY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_say.py"
 # NO queue CLI path here on purpose. The listener queues by IMPORTING the governor
@@ -112,7 +112,7 @@ LISTENER_HANDLED = VAULT / ".baxter_listener_handled.json"   # own ledger (survi
 FAST_HANDLED = VAULT / ".baxter_fast_handled.json"           # shared- claim here to mute the poll
 LISTENER_WORKER_LOG = VAULT / ".baxter_listener_worker.log"
 REACTED = VAULT / ".baxter_fast_reacted.json"       # 👀 work-start receipts, shared w/ fast lane (dedup)
-ARCHIVE_CH = {"222222222222222201"}                # activity-log: log-only, never chatter (Atul, 7th July)
+ARCHIVE_CH = {"222222222222222201"}                # activity-log: log-only, never chatter (the owner, 7th July)
 PLUGIN_FALLBACK = {"222222222222222202", "222222222222222201", "222222222222222203"}
 # coc-farm is BOTH a conversational channel (Baxter answers, like #general) AND the CoC
 # daemon's command surface (coc_bot/coc_discord.py polls it and replies to exact keywords).
@@ -150,7 +150,7 @@ def _log(msg):
 
 
 def _entry(name, interaction):
-    """Log a slash interaction the INSTANT it lands- BEFORE the 3s ack (Atul, 8th July: a
+    """Log a slash interaction the INSTANT it lands- BEFORE the 3s ack (the owner, 8th July: a
     /blacken dropped with no reply AND no log line, so we couldn't even see it arrived). An
     entry line here turns any silent drop- ack miss, dup race, crash- into a visible
     diagnostic: if a command runs, this fires first, no exceptions."""
@@ -238,7 +238,7 @@ async def on(interaction: discord.Interaction):
 
 
 def _proc_running(needle):
-    """Match python* processes only (Atul, 8th July- a bare CommandLine substring match
+    """Match python* processes only (the owner, 8th July- a bare CommandLine substring match
     can false-positive on an unrelated process that merely mentions the script name, e.g.
     an editor with the file open, which silently skipped a /blacken launch).
 
@@ -261,7 +261,7 @@ def _proc_running(needle):
 def _blacken():
     """Launch the force_dark enforcer (idempotent)- exactly what coc cmd_dark does.
     Returns True only once the process is CONFIRMED alive, so a silent Popen/launch
-    failure never gets reported to Atul as a success (8th July- caught reporting
+    failure never gets reported to the owner as a success (8th July- caught reporting
     success while the enforcer never actually started)."""
     if _proc_running("force_dark.py"):
         return True
@@ -363,7 +363,7 @@ async def unblacken(interaction: discord.Interaction):
         _log("/unblacken -> FAILED (force_dark still alive after two kill attempts)")
 
 
-# ---- /farm + /farmstop: force-action the CoC farm from his phone (Atul, 9th July 09:12) ---
+# ---- /farm + /farmstop: force-action the CoC farm from his phone (the owner, 9th July 09:12) ---
 # "so I can force action it when needed". coc_bot/coc_discord.py ALREADY owns every farm state
 # change; this layer only calls it. No path arithmetic here, no second implementation of
 # pause/resume/boot- [[coc-farm-dual-owner]]: a forked copy double-replies, then drifts.
@@ -422,7 +422,7 @@ async def farm(interaction: discord.Interaction):
     _log(f"/farm -> {' | '.join(lines.splitlines())}")
 
 
-# ---- /queue: the build queue, live + reorderable (Atul, 8th July 20:49 + 22:32) ----------
+# ---- /queue: the build queue, live + reorderable (the owner, 8th July 20:49 + 22:32) ----------
 # "Show the build queue, sleek + dynamically updating" (20:49) and "an easy way for me to
 # organise the build order" (22:32). One surface: he sees what's building, what's waiting,
 # and reprioritises any of it from his phone.
@@ -435,7 +435,7 @@ async def farm(interaction: discord.Interaction):
 # queued, not a slot to be traded, so we never rewrite it to fake a position.
 #
 # The write goes STRAIGHT onto the entry, not through gov.enqueue(): enqueue keeps
-# min(old, new), so it can only ever promote. Atul must be able to demote a build too.
+# min(old, new), so it can only ever promote. the owner must be able to demote a build too.
 QUEUE_REFRESH_SECS = 30      # live re-render cadence while the view is open
 QUEUE_REFRESH_TICKS = 20     # ~10 minutes of it, then the controls retire (no orphan loops)
 QUEUE_MAX_OPTIONS = 25       # Discord's hard cap on select options
@@ -470,10 +470,10 @@ def _qk(entry):
 
 
 def _short(text, n=68):
-    """One clean label. Strips the '(Atul, 8th July 20:49)' attribution- provenance is noise
+    """One clean label. Strips the '(the owner, 8th July 20:49)' attribution- provenance is noise
     in a list he's skimming on a phone."""
     t = " ".join(str(text or "").split())
-    t = re.sub(r"\s*\((?:Atul|his)\b[^)]*\)", "", t)
+    t = re.sub(r"\s*\((?:the owner|his)\b[^)]*\)", "", t)
     return t if len(t) <= n else t[:n - 1].rstrip(" ,.;:-") + "…"
 
 
@@ -486,7 +486,7 @@ def _prio_of(e):
 
 def _live_lanes():
     """What's building right now, one row per live lane, labelled `lane 1` up to gov.LANE_COUNT
-    (never lane 0- Atul, 9th July). The label comes from gov.lane_label, so it follows LANE_COUNT
+    (never lane 0- the owner, 9th July). The label comes from gov.lane_label, so it follows LANE_COUNT
     and no ceiling is written down here."""
     rows = []
     for rf, e in gov.lane_journals():
@@ -587,7 +587,7 @@ def _queue_embed(selected=None, note=None):
             if p != band:
                 band = p
                 blocks.append(f"\n**p{p} · {PRIO_LABELS.get(p, 'low')}**")
-            mark = "\U0001F512 " if gov.is_human_gated(e) else ""      # 🔒 waiting on Atul
+            mark = "\U0001F512 " if gov.is_human_gated(e) else ""      # 🔒 waiting on the owner
             pick = "▸ " if selected and _qk(e) == selected else ""  # ▸ currently selected
             blocks.append(f"`{i:>2}.` {pick}{mark}{_short(e.get('task'))}  ·  _{_when(e.get('queued_at'))}_")
 
@@ -726,7 +726,7 @@ class QueueView(discord.ui.View):
         self.add_item(self.slot)
 
     async def interaction_check(self, interaction):
-        if interaction.user.id != ATUL_ID:
+        if interaction.user.id != OWNER_ID:
             await interaction.response.send_message("Not yours to touch.", ephemeral=True)
             return False
         return True
@@ -744,7 +744,7 @@ class QueueView(discord.ui.View):
     # PINS to p1- it crosses bands, which no move ever does.
     @discord.ui.button(label="Run next", emoji="\U0001F4CC", style=discord.ButtonStyle.primary, row=2)
     async def run_next(self, interaction: discord.Interaction, _button: discord.ui.Button):
-        """p1 = 'Atul says do this first'- the contract's own word for it."""
+        """p1 = 'the owner says do this first'- the contract's own word for it."""
         if not self.selected:
             await interaction.response.send_message("Pick a build first, sir.", ephemeral=True)
             return
@@ -804,7 +804,7 @@ def selftest_panel():
       5. the controls exist, and grey out on a frozen selection
 
     Every outward path is stubbed ([[selftests-stub-every-outward-path]]): a lane selftest
-    once reached _say and posted a false alert to Atul."""
+    once reached _say and posted a false alert to the owner."""
     import tempfile
     real = (gov.TASK_QUEUE, gov._log, gov._live_lane_of, globals()["_log"])
     gov.TASK_QUEUE = Path(tempfile.mkdtemp(prefix="baxter_panel_")) / "queue.json"
@@ -939,7 +939,7 @@ class _FakeInteraction:
     """Just enough of discord.Interaction for _entry / _safe_defer / followup.send."""
 
     def __init__(self, sink):
-        self.user = type("U", (), {"id": ATUL_ID})()
+        self.user = type("U", (), {"id": OWNER_ID})()
         self.response = _FakeResponse()
         self.followup = _FakeFollowup(sink)
 
@@ -952,7 +952,7 @@ def selftest_coc():
       2. /farmstop pauses, and coc_autopilot's own condition SEES the pause (the skipped beat)
       3. /farm refuses under the grandmaster OFF flag, touching nothing
       4. /farm clears the pause and boots- with the cv2-capable interpreter, not sys.executable
-      5. cmd_boot's failure + stand-down verdicts reach Atul verbatim, never a blanket success
+      5. cmd_boot's failure + stand-down verdicts reach the owner verbatim, never a blanket success
 
     Every outward path is stubbed and every write is redirected to a tempdir. coc_discord.HERE
     and OFF_FLAG in particular: writing the REAL coc_bot/auto_pause would pause his live farm
@@ -1052,7 +1052,7 @@ def _live_guild_commands():
     """The command names Discord ACTUALLY serves for this guild, read over the REST API.
 
     selftest_coc() runs the handlers in a fresh process on current source, which proves the
-    code is right- not that Atul's phone can call it ([[long-lived-process-staleness]]). Only
+    code is right- not that the owner's phone can call it ([[long-lived-process-staleness]]). Only
     the registered tree proves the second thing, so this reads it rather than trusting a sync
     that may have failed, or a resident bot that may still serve older code.
 
@@ -1083,7 +1083,7 @@ def selftest_coc_live():
 
     The real `coc_bot/auto_pause` and `.baxter_off` are snapshotted around the run and COMPARED,
     never merely asserted absent: if a future stubbing mistake in selftest_coc() writes the real
-    pause file, this catches it instead of quietly pausing Atul's live farm
+    pause file, this catches it instead of quietly pausing the owner's live farm
     ([[selftests-stub-every-outward-path]])."""
     real_pause = COC_DIR / "auto_pause"
     real_off = VAULT / ".baxter_off"
@@ -1096,7 +1096,7 @@ def selftest_coc_live():
     after = (real_pause.exists(), real_off.exists())
     assert before == after, (
         f"the selftest MUTATED live state- auto_pause/.baxter_off went {before} -> {after}. "
-        "A stub leaked onto the real paths; Atul's farm may now be paused.")
+        "A stub leaked onto the real paths; the owner's farm may now be paused.")
 
     names = _live_guild_commands()
     missing = {"farm", "farmstop"} - names
@@ -1111,7 +1111,7 @@ def selftest_coc_live():
 
 
 def _drive(name):
-    """Invoke a registered slash callback the way Discord does, and return what Atul is told."""
+    """Invoke a registered slash callback the way Discord does, and return what the owner is told."""
     sink = []
     cmd = tree.get_command(name, guild=GUILD)
     assert cmd is not None, f"/{name} is not registered on the command tree"
@@ -1138,9 +1138,9 @@ async def queue(interaction: discord.Interaction):
 
 @tree.error
 async def on_tree_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    """Global catch-all for ANY slash-command exception (Atul, 8th July- unhandled command
+    """Global catch-all for ANY slash-command exception (the owner, 8th July- unhandled command
     errors were vanishing into discord.py with no log). Every failure now leaves a line, and
-    we try to tell Atul the command dropped rather than leave him staring at silence."""
+    we try to tell the owner the command dropped rather than leave him staring at silence."""
     cmd = getattr(getattr(interaction, "command", None), "name", "?")
     _log(f"/{cmd} tree.on_error: {type(error).__name__}: {error}")
     try:
@@ -1192,7 +1192,7 @@ def _claim(mid):
     claim with its own stale snapshot: on 9th July the listener claimed and answered msg
     444444444444444401 (spawn 09:39:55, reply 09:40:29), its claim was erased, and the fast
     lane re-picked and re-answered the same message at 09:40:40- a second Opus worker for
-    nothing. No double reply ever reached Atul: baxter_say's atomic (channel + reply_to) guard
+    nothing. No double reply ever reached the owner: baxter_say's atomic (channel + reply_to) guard
     caught it. That guard remains the SECOND line of defence; this lock is the first, and the
     wasted spawn is now prevented rather than merely absorbed."""
     mid = str(mid)
@@ -1263,7 +1263,7 @@ def _live_big_ask(cid, mid, content, gated):
     """Write the queue entry for a sizeable ask BEFORE this listener says a word about it.
     Returns (position, acked, big).
 
-    THE HOLE THIS CLOSES (Atul, 9th July). `_is_big_ask` stopped excluding @mentions and
+    THE HOLE THIS CLOSES (the owner, 9th July). `_is_big_ask` stopped excluding @mentions and
     replies-to-Baxter, so the fast lane now recognises them- but the fast lane deliberately
     leaves them ALONE, because they are the live channel session's turf. Nothing wrote the
     entry for them. The live session was told by CLAUDE.md to queue big work, which rests the
@@ -1288,15 +1288,15 @@ def _live_big_ask(cid, mid, content, gated):
       - it RETURNS the slot, read off the settled queue, so the ack can state it. The old ack
         was `bf._big_ack()` with no argument at all- and since 09:38 that argument is
         mandatory, so at the wall an @mention big-ask raised TypeError into on_message's
-        outer except and Atul got SILENCE plus no queue entry.
+        outer except and the owner got SILENCE plus no queue entry.
       - it passes `source_mid`, so triage's later, better-worded filing upgrades this row
         instead of forking a twin beside it.
 
     A VITAL is never wall-acked: that ack promises to get to it once usage resets, which is
     precisely what an emergency cannot wait for. It is written at p1 and left to the reply
     worker, which answers him now. See bf._is_vital."""
-    m = {"id": str(mid), "content": content or "", "author": {"id": str(ATUL_ID)}}
-    uid = str(ATUL_ID)
+    m = {"id": str(mid), "content": content or "", "author": {"id": str(OWNER_ID)}}
+    uid = str(OWNER_ID)
     if not bf._is_big_ask(m, uid):
         return "", False, False
     try:
@@ -1319,20 +1319,20 @@ def _live_big_ask(cid, mid, content, gated):
 
 
 def _reply_parent_block(ref):
-    """When Atul used Discord's REPLY feature, the message he replied to IS the context
-    (Atul, 8th July- the worker bound to recent chatter instead of the referenced message
+    """When the owner used Discord's REPLY feature, the message he replied to IS the context
+    (the owner, 8th July- the worker bound to recent chatter instead of the referenced message
     and answered the wrong topic). Given the resolved parent discord.Message, return a block
     to PIN as PRIMARY context above the recent-chatter convo, or '' if there's nothing to pin."""
     if ref is None:
         return ""
     try:
-        who = "Baxter (you)" if ref.author.bot else (ref.author.name or "Atul")
+        who = "Baxter (you)" if ref.author.bot else (ref.author.name or "the owner")
         text = (ref.content or "").replace("\n", " / ").strip()[:600]
     except Exception:
         return ""
     if not text:
         return ""
-    return ("REPLY TARGET- Atul used Discord's reply feature ON THIS message, so it is what "
+    return ("REPLY TARGET- the owner used Discord's reply feature ON THIS message, so it is what "
             "he is responding to. ANCHOR your answer to it, NOT the recent chatter below:\n"
             f"  {who}: \"{text}\"\n\n")
 
@@ -1344,7 +1344,7 @@ def _reply_prompt(body, cid, mid, convo, reply_parent="", queued=""):
     in force. It is a DEFAULT kwarg because rules.check() renders every `*_prompt` here with
     dummy positional args, and a builder it cannot render is a rule it cannot police."""
     return (
-        f"You are Baxter, Atul's butler-assistant. His Obsidian vault is {VAULT} "
+        f"You are Baxter, the owner's butler-assistant. His Obsidian vault is {VAULT} "
         f"(00-Inbox + 20-Projects hold tasks as '- [ ] ...' lines with #project tags and due "
         f"dates like \U0001F4C5 2026-07-04; 40-Drafts holds drafts; Subscriptions.md money). "
         f"{reply_parent}"
@@ -1369,17 +1369,17 @@ def _reply_prompt(body, cid, mid, convo, reply_parent="", queued=""):
 def _continuation_prompt(body, cid, mid, reply_parent="", queued=""):
     """Prompt for a RESUMED session (per-channel master, or a reply continuing a thread).
     The session already holds its own identity + the whole prior conversation, so we don't
-    re-inject the Baxter preamble or convo- we just hand it Atul's new turn. If he replied to
+    re-inject the Baxter preamble or convo- we just hand it the owner's new turn. If he replied to
     a SPECIFIC earlier message (not the latest turn), pin it so the resumed session anchors to
     that message, not merely its own last reply.
 
     It carries the SAME rules block as a fresh session. It used to carry only the naming rule-
     the tool-call budget, the deflection wording and the one-edit rule had quietly drifted out.
-    Nobody decided a resumed session should follow fewer rules (Atul, 9th July). `queued` is
+    Nobody decided a resumed session should follow fewer rules (the owner, 9th July). `queued` is
     the same placeholder block _reply_prompt carries, and for the same reason: a resumed
     session is exactly as able to invent a position as a fresh one."""
     return (
-        f"Atul just sent a new message in Discord channel {cid}. Continue our ongoing "
+        f"the owner just sent a new message in Discord channel {cid}. Continue our ongoing "
         f"conversation- it binds to everything said in this thread so far.\n\n"
         f"{reply_parent}"
         f"\"{body}\"\n\n"
@@ -1412,7 +1412,7 @@ def _spawn_reply_worker(body, cid, mid, convo, session, mode, reply_parent="", q
     reply in that channel. 'create' starts a fresh session (--session-id), 'resume' continues
     an existing one (--resume) so a per-channel master thread or a reply keeps full context.
     Carries NO 'big-task' marker so the watcher's usage-enforce spares it below the 90% floor-
-    it's vital (answering Atul), like the fast lane. The 3-lane cap lives inside the worker."""
+    it's vital (answering the owner), like the fast lane. The 3-lane cap lives inside the worker."""
     try:
         prompt = _reply_prompt(body, cid, mid, convo, reply_parent, queued) if mode == "create" \
             else _continuation_prompt(body, cid, mid, reply_parent, queued)
@@ -1433,8 +1433,8 @@ def _spawn_reply_worker(body, cid, mid, convo, session, mode, reply_parent="", q
         return False
 
 
-# SIBLING BOTS (Atul, 10th July- Baxter was answering messages plainly addressed to Codex/Jem).
-# When Atul addresses a sibling bot and NOT Baxter, Baxter stands back with the handsoff reaction
+# SIBLING BOTS (the owner, 10th July- Baxter was answering messages plainly addressed to Codex/Jem).
+# When the owner addresses a sibling bot and NOT Baxter, Baxter stands back with the handsoff reaction
 # and never replies- see _route's 'standback' branch and on_message.
 #
 # THE RULE ITSELF NOW LIVES IN baxter_siblings (11th July). It used to live here alone, and the
@@ -1452,10 +1452,10 @@ SIBLING_IDS = _sibling_ids()
 
 def _route(cid, content, mentioned):
     """THE DE-DUP RULE as a pure, testable decision (no side effects). Returns exactly one
-    dispatch category for a message already known to be from Atul (not a bot):
+    dispatch category for a message already known to be from the owner (not a bot):
       'empty'   -> no text to answer (attachment-only / intent not delivering)
       'offon'   -> bare pause toggle: leave it to the fast lane's pure-code path
-      'archive'    -> activity-log: one-way (Baxter->Atul), never a chatter reply
+      'archive'    -> activity-log: one-way (Baxter->the owner), never a chatter reply
       'coc-daemon' -> a bare CoC command in coc-farm: the coc_discord daemon owns that reply
       'standback'  -> addressed to a sibling bot (Codex/Jem), not Baxter: react-only, never reply
       'handle'     -> EVERY other channel- this listener answers via the reply-worker lane
@@ -1465,10 +1465,10 @@ def _route(cid, content, mentioned):
     if re.match(r"^/?(off|on)$", content.strip(), re.I):
         return "offon"
     if str(cid) in ARCHIVE_CH:
-        return "archive"                 # activity-log is one-way (Baxter->Atul): never chatter
+        return "archive"                 # activity-log is one-way (Baxter->the owner): never chatter
     if str(cid) == COC_FARM_ID and _is_coc_command(content):
         return "coc-daemon"              # bare CoC command: the coc_discord daemon answers it, not us
-    # FULL CHANNEL-PARITY (Atul, 8th July 20:21- coc-farm went 👀-but-silent, he had to chase
+    # FULL CHANNEL-PARITY (the owner, 8th July 20:21- coc-farm went 👀-but-silent, he had to chase
     # in #general twice). EVERY non-archive channel is now answered by THIS listener's headless
     # reply-worker lane, exactly like #general. The old 'skip-plugin-mention' branch deferred
     # any channel in access.json groups (in practice ONLY coc-farm- #general is caught by the
@@ -1501,7 +1501,7 @@ async def _convo(message):
 
 
 async def _eyes(message, mid):
-    """👀 WORK-START receipt (Atul, 8th July clarification). His semantics: 👀 means 'on it
+    """👀 WORK-START receipt (the owner, 8th July clarification). His semantics: 👀 means 'on it
     now', NOT 'seen it'- so it fires the instant Baxter actually PICKS UP a message and begins
     working it (just before a reply worker is spawned), never on mere sight/poll and never
     on a defer-till-reset ack. The listener sees every channel, so reacting here delivers the
@@ -1526,13 +1526,13 @@ async def _eyes(message, mid):
 @client.event
 async def on_message(message):
     """Real-time dispatch. THE DE-DUP RULE (exactly one responder per message):
-      - ignore bots (loop guard) and anyone who isn't Atul;
+      - ignore bots (loop guard) and anyone who isn't the owner;
       - ignore anything from before startup (no history replay);
       - activity-log is one-way -> SKIP; a bare CoC command in coc-farm -> the CoC daemon owns it;
       - otherwise HANDLE- answer via the reply-worker lane, in EVERY channel (full parity).
     """
     try:
-        if message.author.bot or message.author.id != ATUL_ID:
+        if message.author.bot or message.author.id != OWNER_ID:
             return
         global START_TS
         if START_TS is not None and message.created_at < START_TS:
@@ -1614,30 +1614,30 @@ async def on_message(message):
             _spawn_say(cid, mid, bf._floor_ack())
             _log(f"listener: FLOOR ack (no llm) to {mid}")
             return
-        # ---- session continuation (Atul, 8th July). Resolve which Claude session this
+        # ---- session continuation (the owner, 8th July). Resolve which Claude session this
         # turn runs in: a non-#general channel = the channel's persistent MASTER thread;
         # #general = per-task, unless it's a REPLY to a Baxter answer, in which case we
-        # resume THAT answer's session. To resume a reply we resolve the ORIGINAL Atul
-        # message: Atul replied to a Baxter msg, and that Baxter msg itself replied to
-        # Atul's original- so referenced.reference.message_id is the key into the ledger.
-        referenced_atul_mid = None
-        reply_parent = ""              # PRIMARY context block: the message Atul actually replied to
+        # resume THAT answer's session. To resume a reply we resolve the ORIGINAL the owner
+        # message: the owner replied to a Baxter msg, and that Baxter msg itself replied to
+        # the owner's original- so referenced.reference.message_id is the key into the ledger.
+        referenced_owner_mid = None
+        reply_parent = ""              # PRIMARY context block: the message the owner actually replied to
         is_reply = bool(message.reference and message.reference.message_id)
         if is_reply:
             try:
                 ref = message.reference.resolved
                 if not isinstance(ref, discord.Message):
                     ref = await message.channel.fetch_message(message.reference.message_id)
-                # pin the referenced message as primary context (Atul, 8th July- the worker
+                # pin the referenced message as primary context (the owner, 8th July- the worker
                 # was answering off recent chatter instead of the message he replied to)
                 reply_parent = _reply_parent_block(ref)
                 if (ref and ref.author.id == client.user.id
                         and ref.reference and ref.reference.message_id):
-                    referenced_atul_mid = str(ref.reference.message_id)
+                    referenced_owner_mid = str(ref.reference.message_id)
             except Exception as e:
                 _log(f"listener: reply-chain resolve failed for {mid}: {e}")
         session, mode = lanes.plan_session(cid, is_reply=is_reply,
-                                           referenced_atul_mid=referenced_atul_mid)
+                                           referenced_owner_mid=referenced_owner_mid)
         if str(cid) == lanes.GENERAL_ID and mode == "create":
             # record so a future reply to THIS answer resumes this per-task session
             lanes.set_message_session(mid, session)
@@ -1672,11 +1672,11 @@ async def on_ready():
 
 
 def _acquire_singleton():
-    """Named-mutex singleton guard (Atul, 8th July- a duplicate slash bot racing the SAME
+    """Named-mutex singleton guard (the owner, 8th July- a duplicate slash bot racing the SAME
     interaction means one wins the 3s ack and the other's defer throws 'already acknowledged'
     silently, dropping the command). A kernel mutex is stale-proof: Windows releases it the
     instant the holding process dies, unlike a PID lockfile that can outlive a crash. Both
-    bots run as Atul in one session, so a session-local (un-prefixed) name is right- no
+    bots run as the owner in one session, so a session-local (un-prefixed) name is right- no
     Global\\ privilege needed. Returns the handle to keep alive, or None if another instance
     already holds it (caller must exit so it can't race the ack)."""
     ERROR_ALREADY_EXISTS = 183
@@ -1759,7 +1759,7 @@ def selftest_ledger():
 
 
 def selftest_standback():
-    """Baxter stands back with the handsoff reaction (never a reply) when Atul addresses a sibling
+    """Baxter stands back with the handsoff reaction (never a reply) when the owner addresses a sibling
     bot- and still answers when he addresses, or co-mentions, Baxter.
 
     Guards the 10th-July regression (Baxter talking over Codex). Asserts the pure _route decision
@@ -1821,7 +1821,7 @@ def selftest_standback():
             self.id = mid
             self.channel = _Ch(cid, ref_msg)
             self.reference = reference
-            self.author = _U(333333333333333301)      # ATUL_ID, not a bot
+            self.author = _U(333333333333333301)      # OWNER_ID, not a bot
             self.created_at = None
             self.reactions = []
 

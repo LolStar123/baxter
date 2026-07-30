@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The PM delegate: a separate Opus instance writes the PRD, and nothing else files a build.
 
-Atul, 9th July 09:47. `baxter_prd_template` is the form and the gate; this is the thing
+the owner, 9th July 09:47. `baxter_prd_template` is the form and the gate; this is the thing
 that hands the form to a product manager and refuses to file what comes back if it does
 not validate.
 
@@ -32,7 +32,7 @@ and never Fable. That is the module whose whole existence is to stop a spawn sit
 WHAT THIS DOES NOT DO (say it plainly, it is not a shipped gate yet): `baxter_usage.py
 --queue` still accepts a bare task string from any caller. The PRD requirement binds only
 work routed through here. Making `--queue` itself refuse a PRD-less entry is a hub region
-outside this build's touch-set, and Atul's "is the shape right" call on the template is
+outside this build's touch-set, and the owner's "is the shape right" call on the template is
 still open.
 
 CLI:
@@ -71,7 +71,7 @@ MANAGER_TIMEOUT = 900                # the second round-trip: the manager reads,
 # so the expensive half of the budget is never spent on a document that is not moving.
 MAX_ATTEMPTS = 3
 
-# THE MANAGER'S OWN REJECT LOG. Atul, 9th July 08:46, of the clash delegator: "it is very
+# THE MANAGER'S OWN REJECT LOG. the owner, 9th July 08:46, of the clash delegator: "it is very
 # important that security guard periodically rejects things, thats how we know it is
 # functional." A gate whose refusals are invisible is a gate nobody can audit, so every
 # verdict- greenlight, changes and reject alike- appends one json row here.
@@ -149,7 +149,7 @@ YOU ARE A PRODUCT MANAGER, NOT A BUILDER.
   will be refused if they are thin: at least one real non-goal, at least five edge cases
   each written `<condition> -> <required behaviour>`, a touch-set or a `solo:` reason, a
   verify command or a verify_assert claim, and a `priority:` / `gated_on:` / `next step:` line.
-- `gated_on: atul` if the build acts outward, destroys data, or needs a decision only he
+- `gated_on: owner` if the build acts outward, destroys data, or needs a decision only he
   can make. Otherwise `gated_on: none`. Prose like "do not auto-run" does nothing.
 
 Read the vault and the scripts tree before you write. Then output the document, only the
@@ -981,7 +981,7 @@ def selftest():
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="delegate the PRD to a PM instance, then file it")
-    ap.add_argument("--ask", help="the raw ask, in Atul's words")
+    ap.add_argument("--ask", help="the raw ask, in the owner's words")
     ap.add_argument("--queue-it", action="store_true", help="file the validated PRD into the queue")
     ap.add_argument("--priority", type=int, help="override the priority the PRD asks for")
     ap.add_argument("--triviality", action="store_true",

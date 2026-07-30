@@ -1,7 +1,7 @@
-"""baxter_modelguard - the never-Fable layer + the tiering picker (Atul, 8th-9th July).
+"""baxter_modelguard - the never-Fable layer + the tiering picker (the owner, 8th-9th July).
 
 ONE source of truth for how any Baxter worker/session launches `claude`, plus a
-runtime detector that catches Fable drift and flags Atul.
+runtime detector that catches Fable drift and flags the owner.
 
   TWO AXES, and they are independent (9th July):
 
@@ -14,7 +14,7 @@ runtime detector that catches Fable drift and flags Atul.
   conflation was the bug: a filing batch with a URL asked for lane 'media', which
   silently picked its model too.
 
-  SHIPPED TIERING (Atul, 9th July 00:11- "more 'slave' sort of bots doing grunt work
+  SHIPPED TIERING (the owner, 9th July 00:11- "more 'slave' sort of bots doing grunt work
   tasks for you... like adding grease to a system", and again 09:19):
 
     file   -> Haiku 4.5   inbox filing / dump triage- structured, templated, high-volume
@@ -39,14 +39,14 @@ runtime detector that catches Fable drift and flags Atul.
 
   Detector + SELF-HEAL (--audit, no Claude burn): scans Baxter's OWN live sessions
   (the vault project dir) + running claude.exe cmdlines for Fable. On a hit it
-  AUTO-HEALS with zero prompt to Atul- it KILLS the drifted Fable instance (the
-  triage/queue machinery then respawns that work pinned to Opus). Atul's standing
+  AUTO-HEALS with zero prompt to the owner- it KILLS the drifted Fable instance (the
+  triage/queue machinery then respawns that work pinned to Opus). the owner's standing
   order (8th July 22:02, emphatic repeat): "always take measures to ensure we are
   on opus AUTOMATICALLY upon detection", "no matter what"- and 22:00: "You sort it
   out or kill that instance." So the guard sorts it out itself; the old "swap it
-  back with /model opus, sir" nag is RETIRED as the primary action. Atul is pinged
+  back with /model opus, sir" nag is RETIRED as the primary action. the owner is pinged
   ONLY as a fallback, once/hour, when the auto-heal genuinely can't reach the
-  instance (no killable process mapped to it). Atul's own manual Fable sessions
+  instance (no killable process mapped to it). the owner's own manual Fable sessions
   live under OTHER project dirs (e.g. the Fortnite maps) and are deliberately NOT
   swept- only Baxter's own vault sessions are policed/healed.
 
@@ -69,7 +69,7 @@ HEAVY = "opus"        # orchestrator, builds, the live session, resume- never do
 FAST = "sonnet"       # the declared fast/quick-reply lane
 GRUNT = "haiku"       # mechanical, structured, high-volume: inbox filing
 PROSE = "sonnet"      # briefs, weekly digest, chase drafts, answering him
-BANNED = ("fable",)   # never, ever- Atul's hard line
+BANNED = ("fable",)   # never, ever- the owner's hard line
 
 # ---------------------------------------------------------------------------
 # TWO AXES, NOT ONE (9th July). A spawn declares a WORK CLASS; the class picks the
@@ -82,7 +82,7 @@ BANNED = ("fable",)   # never, ever- Atul's hard line
 #   class -> model   (CLASS_MODELS)   "how clever must this be"
 #   class -> MCP     (CLASS_MCP)      "which servers may it load"   [overridable per call]
 #
-# Atul, 9th July 00:11: "more 'slave' sort of bots doing grunt work tasks for you...
+# the owner, 9th July 00:11: "more 'slave' sort of bots doing grunt work tasks for you...
 # like adding grease to a system", and again 09:19 pasting the tiering proposal back.
 # Filing is the grunt: structured template, high volume, no judgement- Haiku 4.5.
 # Prose (briefs/digests/drafts) is Sonnet 5. Everything that THINKS stays Opus.
@@ -98,7 +98,7 @@ CLASS_MODELS = {
     "classify":  HEAVY,   # triage_photos
     "reconcile": HEAVY,   # maybe_reconcile
     "mine":      HEAVY,   # process_mine_queue (also the 1M-context case- see below)
-    # --- NEVER downgraded (Atul: "Baxter is never downgraded") ---
+    # --- NEVER downgraded (the owner: "Baxter is never downgraded") ---
     "heavy":     HEAVY,
     "build":     HEAVY,
     "live":      HEAVY,
@@ -121,12 +121,12 @@ NEVER_DOWNGRADE = ("heavy", "build", "live", "orch", "resume")
 # ---------------------------------------------------------------------------
 # MCP SCOPING- the other half of "how a Baxter worker launches claude" (9th July).
 #
-# Atul's box inherits five GLOBAL stdio MCP servers from ~/.claude.json (playwright,
+# the owner's box inherits five GLOBAL stdio MCP servers from ~/.claude.json (playwright,
 # shadcn, context7, paper-search, baxter-vault) plus the Discord plugin. Every headless
 # worker was inheriting all of them: measured +5 node and +5 conhost processes per
 # spawn, and the dispatcher runs up to 5 triage workers in parallel. On a resident
 # baseline of ~52 node that is the observed 76-node / 74-conhost burst- console-handle
-# and CPU contention that starves Atul's interactive `claude --resume` TUI mid-render.
+# and CPU contention that starves the owner's interactive `claude --resume` TUI mid-render.
 # That starvation is the ROOT TRIGGER of the terminal lag + ANSI corruption.
 #
 # The workers never needed them. Baxter reads Discord through baxter_read_channel.py
@@ -141,7 +141,7 @@ NEVER_DOWNGRADE = ("heavy", "build", "live", "orch", "resume")
 # `--strict-mcp-config` ignores EVERY other MCP config (global, project, plugin), so
 # the profile below is exactly what the worker gets. Verified 9th July: strict + an
 # empty profile spawns zero MCP node processes and the model reports no mcp__ tools.
-# Atul's own interactive shells are untouched- this only decorates Baxter's spawns.
+# the owner's own interactive shells are untouched- this only decorates Baxter's spawns.
 # ---------------------------------------------------------------------------
 _NO_MCP = {"mcpServers": {}}
 _PLAYWRIGHT_ONLY = {"mcpServers": {"playwright": {
@@ -183,7 +183,7 @@ ALERT = os.path.join(VAULT, ".baxter_fable_alert.json")
 PINGED = os.path.join(VAULT, ".baxter_fable_pinged")
 LOG = os.path.join(VAULT, ".baxter_modelguard.log")
 # Baxter's OWN sessions run with cwd = the vault, so their transcripts live under
-# this project dir. Atul's manual work (Fortnite Fable, etc.) lives under other
+# this project dir. the owner's manual work (Fortnite Fable, etc.) lives under other
 # project dirs and must NEVER be flagged/swept as a Baxter drift.
 BAXTER_PROJ = os.path.join(os.path.expanduser("~"), ".claude", "projects",
                            "C--Users-you-Documents-Baxter")
@@ -354,8 +354,8 @@ def _clear(*paths):
 
 def audit(minutes=25, quiet=False):
     """Scan Baxter's live sessions + running procs for Fable and AUTO-HEAL on a hit-
-    kill the drifted instance so triage respawns it on Opus, zero prompt to Atul.
-    Ping Atul ONLY as a fallback when the auto-heal can't reach the instance.
+    kill the drifted instance so triage respawns it on Opus, zero prompt to the owner.
+    Ping the owner ONLY as a fallback when the auto-heal can't reach the instance.
     Returns 0 (clean or fully self-healed) or 2 (Fable left unhealed). No Claude burn."""
     sessions = _live_baxter_fable(minutes)
     procs = _claude_procs()
@@ -415,7 +415,7 @@ def audit(minutes=25, quiet=False):
 
 
 def _ping(msg):
-    """The ONE outward call this guard makes- a drift alert to Atul. Returns True only if the
+    """The ONE outward call this guard makes- a drift alert to the owner. Returns True only if the
     line actually left. Exit 3 is a DENIAL: baxter_say refused the claim, printed why, and sent
     nothing. Record the reason in the voiceless denial sink and do NOT stamp PINGED- the
     hour-cooldown must never start on a ping that never went

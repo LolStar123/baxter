@@ -1,6 +1,6 @@
 r"""baxter_coop_guardian - independent life-support for Codex + Jem.
 
-THE ASYMMETRY THIS FIXES (root-caused 9th July). Atul saw Codex die with Baxter while
+THE ASYMMETRY THIS FIXES (root-caused 9th July). the owner saw Codex die with Baxter while
 Jem lived on, and read it as "they're built differently". They are, but not where it
 looked:
 
@@ -35,11 +35,11 @@ CRASH INDEPENDENCE, concretely:
 
 LIVENESS IS THE HEARTBEAT, NOT THE PID. Each bot beats from inside its asyncio event
 loop every ~30s. A wedged gateway loop keeps the PID alive while serving nothing- exactly
-the "Baxter goes weird" failure mode Atul wants doctored- so a stale beat is treated as
+the "Baxter goes weird" failure mode the owner wants doctored- so a stale beat is treated as
 death: kill the husk, relaunch. A bot mid-`codex exec` still beats (the call runs in a
 worker thread), so a legitimate 15-minute run is never reaped.
 
-Read-only sibling: health_monitor.py alerts Atul when a bot stays down across two of
+Read-only sibling: health_monitor.py alerts the owner when a bot stays down across two of
 these passes, i.e. when THIS script has already tried and failed. That inference is only
 sound if the guardian is itself alive, so every pass stamps its own liveness (see main())
 and health_monitor now checks THAT before blaming the bots.

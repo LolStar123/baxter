@@ -40,7 +40,7 @@ if (-not $PSBoundParameters.ContainsKey('MaxDeferMin') -and $env:BAXTER_WATCH_MA
 $ErrorActionPreference = "Continue"
 $py        = "C:\Users\you\Documents\Python Scripts\utils\baxter_triage.py"
 # Ad-hoc reminder poller (8th July- his "ping me in 10 mins" that never fired). Spawned from
-# BOTH loops below, and outside the $gaming/$off gates: a reminder Atul explicitly set is a
+# BOTH loops below, and outside the $gaming/$off gates: a reminder the owner explicitly set is a
 # promise, not proactive machinery. Pure code (~50ms, no LLM, no network unless one is due).
 $rem       = "C:\Users\you\Documents\Python Scripts\utils\baxter_reminders.py"
 # The three short-lived, self-locking one-shots. They used to be declared inside the outer beat,
@@ -84,7 +84,7 @@ public class BxFs {
 "@
 
 # WINDOWLESS CHILD SPAWN (8th July- the PERMANENT fix for the terminal-flash / stray-console
-# clutter Atul kept seeing). Start-Process -WindowStyle Hidden does NOT suppress the console of
+# clutter the owner kept seeing). Start-Process -WindowStyle Hidden does NOT suppress the console of
 # a console-subsystem binary (python.exe / node.exe): ShellExecute allocates a real console and
 # only then hides it, which FLASHES a black box and steals keyboard focus (his 14:14 complaint),
 # and can leave a stray console sitting there. Spawning through .NET ProcessStartInfo with
@@ -220,7 +220,7 @@ function Get-SingletonCounts {
 
 $script:guardianDownBeats = 0
 
-# The standalone ping is the entire point of the auto-reaper (Atul, 8 Jul 23:54: "this sort of
+# The standalone ping is the entire point of the auto-reaper (the owner, 8 Jul 23:54: "this sort of
 # thing deserves a separate ping"). Both pings used to go out as
 #     try { & python "$sayPy" $msg 2>$null } catch {}
 # which is three faults on one line. `python` is resolved off the watcher's PATH rather than
@@ -296,12 +296,12 @@ function Assert-Guardian($guardianCount) {
 
 function Assert-Singletons {
     # DETECTION NET (added 6 Jul, after a duplicate live channel session ran ~6h undetected
-    # and double-answered every message) - now an AUTO-REAPER too (Atul, 8 Jul 23:54: "I want
+    # and double-answered every message) - now an AUTO-REAPER too (the owner, 8 Jul 23:54: "I want
     # you to ALWAYS reap this sort of duplicates").
     #
     # It used to be detection-only, deferring the reaping to "the per-component guards". The
     # CoC daemons and the WhatsApp bridge have no such guard, so their duplicates could ONLY
-    # ever be cleared by Atul running the doctor by hand- which is how a `coc autopilot x2`
+    # ever be cleared by the owner running the doctor by hand- which is how a `coc autopilot x2`
     # came to sit on the alert for hours. Now: REAP every beat, RE-CENSUS to prove it took,
     # and PING once per episode. The 30-min cooldown gates the PING ONLY, never the reap.
     #
@@ -328,7 +328,7 @@ function Assert-Singletons {
         }
         if ($dupes.Count -eq 0) {
             # Only clear an EXPIRED flag. Clearing a live one would reset the ping cooldown,
-            # so a duplicate that respawns every beat would ping Atul once a minute.
+            # so a duplicate that respawns every beat would ping the owner once a minute.
             if (Test-Path $dupFlag) {
                 $expired = $true
                 try { $expired = ((((Get-Date) - [datetime]::Parse((Get-Content $dupFlag -Raw))).TotalMinutes) -ge 30) } catch {}
@@ -374,7 +374,7 @@ function Assert-Singletons {
             return
         }
 
-        # STANDALONE ping, its own message, naming what was reaped (Atul, 8 Jul 23:54: "this
+        # STANDALONE ping, its own message, naming what was reaped (the owner, 8 Jul 23:54: "this
         # sort of thing deserves a separate ping")- never folded into another confirmation.
         if ($recent) { return }
         if ($survivors.Count -gt 0) {
@@ -406,7 +406,7 @@ if (-not (Test-Path $pyCoc)) { $pyCoc = "python" }
 # --- coc watchdog --loop: a RESURRECTABLE singleton (9 Jul) ---------------------------------
 # `watchdog.py --loop` is the ONLY thing keeping the five CoC daemons alive, and it was started
 # solely by Startup/coc_watchdog.vbs at logon. If it crashed, NOTHING revived it and the whole
-# farm ran unwatched until Atul next logged in. It deliberately does NOT join $BxSingles: that
+# farm ran unwatched until the owner next logged in. It deliberately does NOT join $BxSingles: that
 # set is a DUPLICATE detector whose reaper only ever trims a row DOWN, and an absent row there
 # is merely reported. This one needs the opposite- absent means relaunch- so it gets its own
 # census and its own assert, modelled on Assert-Guardian.
@@ -687,7 +687,7 @@ $residents = [ordered]@{
         Watch = @(Join-Path $waDir 'bridge.mjs')
         Name  = 'node\.exe'; Cmd = 'bridge\.mjs'
         File  = 'node'; Arguments = 'bridge.mjs'; Cwd = $waDir
-        # Heavy + Atul must scan a QR if it comes up unlinked: never bounce it during /off
+        # Heavy + the owner must scan a QR if it comes up unlinked: never bounce it during /off
         # or once it has flagged that it needs a relink.
         SkipWhenOff = $true
         SkipIf = { Test-Path $waRelink }
@@ -759,18 +759,18 @@ $wasGaming = $false
 
 $usagePy = "C:\Users\you\Documents\Python Scripts\utils\baxter_usage.py"
 $stopFlag = Join-Path $vault ".baxter_stop"
-# Grandmaster OFF (Atul's /off): free the PC to game. When present we SKIP the heavy,
+# Grandmaster OFF (the owner's /off): free the PC to game. When present we SKIP the heavy,
 # lag-causing spawns (triage claude worker, voice transcription, WhatsApp bridge) but
 # KEEP the fast lane + heartbeat + usage-enforce alive so /on and his questions land.
 $offFlag = Join-Path $vault ".baxter_off"
 
-# HARD USAGE ENFORCEMENT (Atul, 5th July: "pause at 80 must ACTUALLY pause").
+# HARD USAGE ENFORCEMENT (the owner, 5th July: "pause at 80 must ACTUALLY pause").
 # Recompute the band + write/clear .baxter_stop, then KILL any runaway Baxter claude
 # worker the band forbids. Called on EVERY beat slice (~5-15s)- NOT just once per
 # outer loop- so a runaway dies within a slice of the meter crossing the line, not
 # up to a full 60s interval later. This is the active backstop: a worker that ignores
 # its own soft gate does not survive the next beat.
-# A .baxter_override / .baxter_breach flag with a future 'until' is Atul's authorisation-
+# A .baxter_override / .baxter_breach flag with a future 'until' is the owner's authorisation-
 # true while it has not expired. The kill loop must respect these or it would slay the very
 # work he just green-lit (blocked() already lets it through).
 function Test-FlagActive($path) {
@@ -842,11 +842,11 @@ function Invoke-UsageEnforce {
             # but still enforce the 'routine' (90) vital-only wall.
             $overrideOn = Test-FlagActive (Join-Path $vault ".baxter_override")
             $lvl = ((Get-Content $stopFlag -Raw | ConvertFrom-Json).level)
-            # 3-STATE governor kill map (Atul, 8th July- flat 80/90, no 70, vitals NEVER
+            # 3-STATE governor kill map (the owner, 8th July- flat 80/90, no 70, vitals NEVER
             # auto-killed). Mirrors baxter_usage.blocked's soft gates:
             #   'big'     (80-90) -> kill only BIG/project workers (resume-worker prompt names
             #                        the 'big-task' slot). Spare routine triage AND the fast
-            #                        lane (vital- answers Atul).
+            #                        lane (vital- answers the owner).
             #   'routine' (90+)   -> BARE MINIMUM / vitals-only: also kill routine triage
             #                        workers (prompt names BAXTER_TRIAGE.md) AND any stray
             #                        big-task worker. STILL spare the fast lane + CoC- vitals
@@ -923,7 +923,7 @@ function Invoke-UsageEnforce {
     }
 }
 
-# CHILD HOT-RELOAD (9 Jul - the fifth "full pass" strike, and the answer to Atul's
+# CHILD HOT-RELOAD (9 Jul - the fifth "full pass" strike, and the answer to the owner's
 # "but this only fixes this instance"). A resident child reads its source ONCE, at launch:
 # an on-disk prompt/logic fix silently does nothing until someone kills the process by hand.
 # baxter_slash.py's system prompt was corrected at 00:42; the instance launched at 23:34 the
@@ -1005,7 +1005,7 @@ $script:lastChildReload = [datetime]::MinValue
 # would Stop-Process the live listener and Start-Hidden a second one. So they abort loudly instead,
 # and bump a counter first- the function's own try/catch would otherwise swallow the throw and the
 # selftest would pass having killed a resident. Per [[selftests-stub-every-outward-path]]: a lane
-# selftest once reached _say and posted a false alert to Atul.
+# selftest once reached _say and posted a false alert to the owner.
 $script:DefaultKiller = {
     param($TargetPid)
     if ($script:SelfTestMode) {
@@ -1103,7 +1103,7 @@ function Invoke-ChildReload {
             # Anti-loop floor, keyed to the mtime we last bounced FOR - not to wall-clock alone.
             # Still stale for the SAME source stamp we already bounced on means the relaunch
             # isn't taking (bad interpreter, child dies on import): back off 5 min rather than
-            # kill it every beat. A NEWER edit is a fresh event and bounces at once - Atul
+            # kill it every beat. A NEWER edit is a fresh event and bounces at once - the owner
             # fixing a file twice in a minute must not wait, that is this whole task's bug.
             if ($state[$k].bounced -and $state[$k].bounced_for -eq $stamp) {
                 try {
@@ -1232,7 +1232,7 @@ function Invoke-TriageWaitLoop {
     #
     # MEASURED, 10th July: a triage child spawned 00:37:44 burned 28,995s of cpu in 29,257s of wall-
     # one core pinned at 99% for eight hours- while this loop waited on it. No cycle completed, and
-    # the queue sat at 24 tasks, 0 running, until Atul noticed by eye. That is the whole of what was
+    # the queue sat at 24 tasks, 0 running, until the owner noticed by eye. That is the whole of what was
     # measured. NOT measured: which frame spun. Nobody attached a debugger before the child was
     # killed. An earlier note here named baxter_stuck_doctor's process-tree walk as the cause on
     # process accounting alone; re-measured against the live fleet that walk took 6.4ms per snapshot
@@ -1719,7 +1719,7 @@ try {
         if (-not $gaming -and -not $off) {
             # keep the WhatsApp bridge alive (read-only linked device). It writes its
             # own heartbeat every 60s and self-guards against duplicates. When it
-            # exits with a needs-relink flag we DON'T relaunch - Atul must scan a QR.
+            # exits with a needs-relink flag we DON'T relaunch - the owner must scan a QR.
             # only keep it alive once LINKED (auth exists) or a link attempt is armed
             # (link_now.txt) - otherwise an unpaired bridge would churn QRs all night.
             $waArmed = (Test-Path (Join-Path $waDir "auth\creds.json")) -or (Test-Path (Join-Path $waDir "link_now.txt"))
@@ -1789,7 +1789,7 @@ try {
                     } catch { Write-WatchLog "baxter_slash launch failed: $_" }
                 }
             } catch {}
-            # CODEX + JEM ARE NOT LAUNCHED HERE ANY MORE (9th July, Atul's decouple order).
+            # CODEX + JEM ARE NOT LAUNCHED HERE ANY MORE (9th July, the owner's decouple order).
             # This block used to start Codex, which made Codex a supervised child of THIS
             # loop- and this loop blocks for minutes on the triage child below, and dies
             # when the watcher dies. That is precisely why Codex went down with Baxter while
@@ -1800,7 +1800,7 @@ try {
         # sleep the interval in short slices, beating as we go (stay fresh while idle too).
         # Each slice fires the same four one-shots the triage-wait loop does:
         #   $fast  - the FAST LANE (baxter_fast.py, detached, self-locking). A BACKSTOP, not the
-        #            primary responder: Atul's replies come from the resident listener
+        #            primary responder: the owner's replies come from the resident listener
         #            (baxter_slash.on_message), an event-driven gateway decoupled from this loop.
         #            The fast lane only bites when that listener is dead, mid-bounce or paused.
         #   $ucmd  - /usage's OWN orthogonal poller (6th-July v2): self-locking, reads the baked

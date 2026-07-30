@@ -1,6 +1,6 @@
 """baxter_verify- the VERIFY + TROUBLESHOOT loop that wraps a build lane's exit.
 
-Atul, 9th July 01:37 (the overnight order): "automatically checking and confirming all
+the owner, 9th July 01:37 (the overnight order): "automatically checking and confirming all
 your work where possible then auto trouble shoot failures and pass successes".
 
 This turns the TRUST-BUT-VERIFY rule into lane MACHINERY. Before it, a lane reported
@@ -38,8 +38,8 @@ Caps are deliberate. One transient retry, three repair attempts, then PARK- and 
 task ANNOUNCES itself, because overnight a silently parked queue looks identical to a
 drained one in the morning. An unbounded self-repair loop is how a usage window is eaten.
 
-The repair attempts themselves are SILENT (Atul, 9th July: "add autonomous root-cause
-troubleshooting- self-diagnose + self-fix- before ever flagging a build failure to Atul").
+The repair attempts themselves are SILENT (the owner, 9th July: "add autonomous root-cause
+troubleshooting- self-diagnose + self-fix- before ever flagging a build failure to the owner").
 A failure the loop is still healing is machinery, not news. Only two things reach him: a
 park (the cap is spent, or the task is gated) and a landing. Silence is therefore bounded
 by MAX_REPAIRS- raise it and you lengthen how long a broken build stays quiet.
@@ -257,7 +257,7 @@ def next_action(kind, entry):
         return "park", f"gated- {entry.get('gated_on', 'a human')} must say go"
     repairs = int(entry.get("repair_attempts", 0) or 0)
     if repairs >= MAX_REPAIRS:
-        return "park", f"{repairs} repair attempts spent- it needs Atul"
+        return "park", f"{repairs} repair attempts spent- it needs the owner"
     if kind == "transient":
         if int(entry.get("transient_retries", 0) or 0) < MAX_TRANSIENT:
             return "retry", "transient- one blind retry, unchanged"
@@ -1046,7 +1046,7 @@ def _unquoted_space_path(tokens, i):
 # asserts something, and a `python -c` calling out to anything at all is accepted because
 # that call may raise. That asymmetry is deliberate and load-bearing: a FALSE REFUSAL is the
 # expensive failure mode here. It sends a builder round the repair loop over an exam that was
-# honest all along, and it burns Atul's window doing it. Refusing a good exam is the same
+# honest all along, and it burns the owner's window doing it. Refusing a good exam is the same
 # crime as sealing a broken one.
 #
 # Hence: every doubt resolves to "not vacuous". Only a source built entirely out of things
@@ -1829,7 +1829,7 @@ def run_command(cmd, timeout=VERIFY_TIMEOUT, env=None):
 
 def _record_hold(entry, info, why):
     """The guard keeps its own log. A hold that only ever reached `.baxter_verify.log` would be
-    invisible to `--rejects`, which is the one place Atul reads the guard's proof of life."""
+    invisible to `--rejects`, which is the one place the owner reads the guard's proof of life."""
     try:
         _usage().record_reject(entry or {"task": "?"}, why,
                                lane=(entry or {}).get("lane"), kind="hub-mutation")
@@ -1855,7 +1855,7 @@ def run_verify_ex(entry, timeout=VERIFY_TIMEOUT):
 
     A shell `verify` command is preferred (cheap, deterministic, no LLM in the loop);
     `verify_assert` falls back to a checker spawn. Neither = unverified, which is a
-    truthful state and NOT a pass- Atul's own carve-out: say so plainly rather than
+    truthful state and NOT a pass- the owner's own carve-out: say so plainly rather than
     implying it is proven.
 
     The command is vetted before it is run and carried WHOLE when it runs: see
@@ -2024,7 +2024,7 @@ def selftest():
     assert kind == "transient" and "ghost" in why, why
 
     # 6. A human-gated task is NEVER auto-repaired, whatever the log says.
-    kind, _ = classify(1, det, {"gated_on": "atul"})
+    kind, _ = classify(1, det, {"gated_on": "owner"})
     assert kind == "gated", "a gated task must never be classified for auto-repair"
     kind, _ = classify(1, det, {"gated_on": ""})
     assert kind == "deterministic", "an empty gate is not a gate"
@@ -2033,7 +2033,7 @@ def selftest():
     assert next_action("transient", {})[0] == "retry"
     assert next_action("transient", {"transient_retries": 1})[0] == "repair"
     assert next_action("deterministic", {})[0] == "repair"
-    assert next_action("gated", {"gated_on": "atul"})[0] == "park"
+    assert next_action("gated", {"gated_on": "owner"})[0] == "park"
 
     # 7b. THE CAP ITSELF, driven attempt by attempt (raised 2 -> 3 on 9th July). Every
     #     attempt below the cap self-heals; the cap exactly is where the silence ends.
@@ -2048,7 +2048,7 @@ def selftest():
     assert next_action("transient", {"repair_attempts": MAX_REPAIRS})[0] == "park", \
         "a spent cap parks whatever the classifier called the failure"
     # ...and a human gate parks INSTANTLY, on attempt zero. Gated work is never self-repaired.
-    assert next_action("gated", {"gated_on": "atul", "repair_attempts": 0})[0] == "park", \
+    assert next_action("gated", {"gated_on": "owner", "repair_attempts": 0})[0] == "park", \
         "a gated task must park before it ever spends a repair attempt"
 
     # 8. No verify declared is UNVERIFIED- never a pass, never a failure.

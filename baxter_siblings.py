@@ -1,6 +1,6 @@
-"""baxter_siblings - the ONE addressed-to check. Is this message Atul talking to Codex/Jem?
+"""baxter_siblings - the ONE addressed-to check. Is this message the owner talking to Codex/Jem?
 
-WHY THIS IS A MODULE AND NOT A LINE (Atul, 11th July 00:51). Baxter answered two messages that
+WHY THIS IS A MODULE AND NOT A LINE (the owner, 11th July 00:51). Baxter answered two messages that
 plainly began `<@codex>`, four minutes apart, and burned an Opus reply worker on each. The
 standback rule DID exist- in `baxter_slash._route` alone. The fast lane (`baxter_fast`), which
 polls the same channel every ~15s, had never heard of a sibling bot: three separate selections
@@ -16,7 +16,7 @@ TWO WAYS A MESSAGE IS ADDRESSED TO A SIBLING:
      position, followed by a comma or colon, or standing alone as the whole message.
 
 A name in the middle of a sentence is ABOUT the sibling, not addressed to it: `ask codex why he
-crashed` and `codex is down, fix him` are both Atul talking TO Baxter, and both stay `handle`.
+crashed` and `codex is down, fix him` are both the owner talking TO Baxter, and both stay `handle`.
 That is why the vocative demands a comma/colon delimiter rather than a bare trailing space- a
 space would swallow `codex is down` and silence Baxter on the very message asking him to help.
 

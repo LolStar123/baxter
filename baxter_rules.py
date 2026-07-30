@@ -1,6 +1,6 @@
 """baxter_rules — the hard rules EVERY Baxter worker prompt carries. ONE copy of each.
 
-WHY THIS MODULE EXISTS (Atul, 9th July 01:07: "this only fixes this instance. I need a
+WHY THIS MODULE EXISTS (the owner, 9th July 01:07: "this only fixes this instance. I need a
 permanent fix"). The rules used to be HAND-TYPED into each prompt builder- the fast lane,
 the fresh-session builder and the resumed-session builder. Three copies drift. On 9th July
 the "full pass" ban was patched into two of the three; nine minutes later a RESUMED session
@@ -49,7 +49,7 @@ BUILDER_MODULES = ("baxter_fast", "baxter_slash")
 # ---------------------------------------------------------------------------
 # THE VOICE. One copy, in one file, exactly as the rules above have one copy each.
 #
-# Atul, 8th July: "generate and edit and develop your md files to be more like claude",
+# the owner, 8th July: "generate and edit and develop your md files to be more like claude",
 # refined at 22:58 to "research JARVIS- every AI adopts a Jarvis vocabulary and syntax
 # approach (Baxter, Codex, Jem alike)". Before this, the voice was typed out in EIGHT
 # places: two md files, both bot personas, three prompt builders and the resurrection
@@ -69,7 +69,7 @@ VOICE_END = "<!-- baxter:voice:end -->"
 # The md files that carry a stamped copy of the block. set_voice_md() writes each one;
 # check() reads each one back and demands it equal voice(), byte for byte after newline
 # normalisation. AGENTS.md and GEMINI.md are Codex's and Jem's own instruction files- the
-# thing Atul asked for when he said "your md files".
+# thing the owner asked for when he said "your md files".
 VOICE_MD_SURFACES = ("CLAUDE.md", "BAXTER_TRIAGE.md", "AGENTS.md", "GEMINI.md")
 
 # The Python surfaces that must RENDER the voice. Each is (module, callable-name), and the
@@ -256,12 +256,12 @@ NO_DIG_RULE = (
     "vault file, and only if you genuinely cannot answer without it- otherwise touch "
     "nothing.\n")
 
-# THE READING OVERRIDE (Atul, 10th July: "it should be allowed to READ all the docs and do
+# THE READING OVERRIDE (the owner, 10th July: "it should be allowed to READ all the docs and do
 # READING based things automatically. It shouldn't need to do info fetches later"). NO_DIG_RULE
 # and DEFLECT_RULE above were written to stop a QUICK reply ballooning into a 20-tool-call BUILD
 # investigation- a real bug, when a yes/no answer triggered a vault expedition. But they overshot:
 # they also stopped Baxter READING to answer a genuine question, and told it to defer the lookup
-# to the queue ("later"), which is the exact thing Atul hates. This clause draws the line those
+# to the queue ("later"), which is the exact thing the owner hates. This clause draws the line those
 # rules missed: READING to answer him is never "later" work- it is the answer. Only work that
 # WRITES (a build, a new file, a code change, a draft) is deferred. It rides ONLY on the reply
 # prompt (baxter_slash._reply_prompt), never on a build worker, and sits LAST so recency makes it
@@ -270,7 +270,7 @@ NO_DIG_RULE = (
 READING_OVERRIDE = (
     "- READING IS ANSWERING, NOT 'LATER'. The 'no digging / read one file / deflect lookups' "
     "lines above exist to stop a quick reply becoming a 20-call BUILD investigation- they do "
-    "NOT gate reading to answer a question. If answering Atul needs you to read vault files, "
+    "NOT gate reading to answer a question. If answering the owner needs you to read vault files, "
     "docs, code or state, DO IT NOW and read as much as the question honestly needs. Never tell "
     "him you'll 'look into it' or 'fetch that later'- that is the one thing he does not want. "
     "ONLY work that WRITES- a build, a new file, a code change, a draft- is queued instead of "
@@ -282,7 +282,7 @@ ONE_EDIT_RULE = (
 
 QUEUE_CMD = str(Path(__file__).resolve().parent / "baxter_usage.py")
 
-# The rule this module exists to make unbreakable (Atul, 9th July- three strikes in eight
+# The rule this module exists to make unbreakable (the owner, 9th July- three strikes in eight
 # minutes). It is enforced in CODE by baxter_preannounce_guard, a PreToolUse hook that
 # DENIES a reply making either claim without the matching tool-call already in the turn.
 # The rule text and the guard must keep saying the same thing- if you soften one, the other
@@ -314,7 +314,7 @@ DEFLECT_RULE = (
     "will edit>\"` and confirm with the position it printed. The heavy triage lane does "
     "deep work; you must not. Never claim a queueing you did not make.\n")
 
-# The rule Atul dictated at 09:38 on 9th July, in the words he used: every queued
+# The rule the owner dictated at 09:38 on 9th July, in the words he used: every queued
 # confirmation states the exact position. It is not a formatting preference. A position can
 # only be printed by a process that has written the entry and read the order back, so
 # demanding the number is what makes the confirmation impossible to fake. That is its force.
@@ -328,18 +328,18 @@ POSITION_RULE = (
     "a slot the queue does not hold, so a guessed number never reaches him- it reaches the "
     "rejects log with your reply still unsent.\n")
 
-# The standing order Atul gave on 9th July, in prompt form. baxter_autobuild is the same
+# The standing order the owner gave on 9th July, in prompt form. baxter_autobuild is the same
 # policy in code- the two must keep saying the same thing, and baxter_autobuild.should_ping()
 # is the single place the severe/meager line is drawn.
 AUTOBUILD_RULE = (
     "- THE MOMENT YOU NOTICE A PROBLEM, QUEUE A BUILD FOR IT YOURSELF, with a priority you "
-    "assign. Do NOT flag a meager issue to Atul first, and do NOT ask permission- a fault he "
+    "assign. Do NOT flag a meager issue to the owner first, and do NOT ask permission- a fault he "
     "has to notice on your behalf is a fault you have not handled. Only a SEVERE fault- a "
     "vital down, something outward-facing, data lost- is worth his attention, and that one "
     "gets a build queued as well as a word to him. Every such build carries a verify command "
     "that proves the repair: a repair that cannot prove itself is not queued at all.\n")
 
-# THE PRD IS THE SPECIFICATION (Atul, 9th July 09:47: a PM Claude fills a rigorous PRD, and a
+# THE PRD IS THE SPECIFICATION (the owner, 9th July 09:47: a PM Claude fills a rigorous PRD, and a
 # PM-manager greenlights it, before a build is filed). Two Opus instances argued the shape of
 # the work out before this worker was woken; a worker that then builds something adjacent has
 # thrown both away. The touch-set in the PRD's section 7 is the same declaration the clash
@@ -358,7 +358,7 @@ PRD_RULE = (
     "file another lane may believe it owns. If the PRD is wrong, say so and halt; do not "
     "quietly build the better idea.\n")
 
-# TRUST BUT VERIFY (Atul, 9th July 00:17, HIGH PRIO), as a rule a worker CARRIES rather than
+# TRUST BUT VERIFY (the owner, 9th July 00:17, HIGH PRIO), as a rule a worker CARRIES rather than
 # a line in a contract it may never open. The contract's hard-rules section has said this
 # from the start; the workers that BUILD never saw it, because the build lane's prompt was
 # hand-typed and imported nothing. Now it reaches every worker from here.
@@ -374,7 +374,7 @@ VERIFY_STEP = (
     "the failure that prompted the work. Test the thing that actually serves him: where a "
     "long-lived process serves the changed code, drive that process, not the file. A 'done' "
     "with no run behind it is a lie, however certain you feel. If it genuinely cannot be run "
-    "yet- gated on Atul, a timer that fires later- say THAT plainly, rather than wording it "
+    "yet- gated on the owner, a timer that fires later- say THAT plainly, rather than wording it "
     "so it reads as proven.\n")
 
 
@@ -399,7 +399,7 @@ WRITER_TOUCH_RULE = (
     "once, each holding a declared touch-set, and you hold none. Run\n"
     f"      python \"{QUEUE_CMD}\" --writer-touch <path> [<path>...]\n"
     "  Exit 0 = nobody owns it, edit freely. Exit 3 = A LIVE LANE OWNS IT: do NOT edit that "
-    "file, tell Atul the lane owns it, and queue the work instead. A PreToolUse hook denies "
+    "file, tell the owner the lane owns it, and queue the work instead. A PreToolUse hook denies "
     "the Edit outright either way, so this is not advice you may decline- it only tells you "
     "before the tool call is refused.\n")
 
@@ -511,7 +511,7 @@ def source_mid_rule(mid):
 
     enqueue() keys on the Discord message id BEFORE the task text, so the entry written for
     this message is found again only by a caller that names the id. A worker that queues
-    with bare `--queue` and better prose looks, to the queue, like a brand new ask- and Atul
+    with bare `--queue` and better prose looks, to the queue, like a brand new ask- and the owner
     gets two rows and a position describing the wrong one. `--source-mid` upgrades the row
     it already has. It is only reachable from the CLI since 9th July; before that, the dedup
     existed but nothing outside the fast lane could reach it.
@@ -524,7 +524,7 @@ def source_mid_rule(mid):
 def queued_block(position="", task=""):
     """The ALREADY QUEUED block, or the flat refusal when nothing was written.
 
-    Both halves of Atul's order live here: an ack may never precede the act, and a bare
+    Both halves of the owner's order live here: an ack may never precede the act, and a bare
     'queued' may never reach him. With no entry there is nothing to confirm, so the worker
     is told in as many words that the word is forbidden to it.
     """
@@ -553,12 +553,12 @@ BUDGET_RULE = (
 
 # WHAT THE OLD `VOICE_RULE` ALSO CARRIED, and must go on carrying. Its one string mixed
 # register ("butler, tight, UK English") with SCOPE ("do NOT create notes/files; never
-# message anyone but Atul"). Only the register half belongs in baxter_voice.md, which is an
+# message anyone but the owner"). Only the register half belongs in baxter_voice.md, which is an
 # md file a model is invited to edit. Folding the scope half in with it would have put a
 # hard line- never act outward- one careless prose edit away from disappearing. So the
 # register moved to voice(), the scope stayed here, and REQUIRED still demands both.
 SCOPE_RULE = (
-    "- Do NOT create notes or files. Never message anyone but Atul, and never act outside "
+    "- Do NOT create notes or files. Never message anyone but the owner, and never act outside "
     "his own server.\n")
 
 # The block every builder interpolates, verbatim, in this order. REMINDER_RULE and
@@ -631,7 +631,7 @@ def reply_via(mid, cid=None):
     """The mandatory reply command. Also duplicated three ways before this module."""
     ch = f"--channel {cid} " if cid else ""
     return (f"REPLY VIA: python \"{SAY}\" {ch}--reply-to {mid} \"<your reply>\"  (mandatory- "
-            f"it is how Atul hears you, and it de-dups so you can never double-send). ")
+            f"it is how the owner hears you, and it de-dups so you can never double-send). ")
 
 
 # How a builder frames the conversation it hands the worker. Duplicated three ways too, and
@@ -663,7 +663,7 @@ def convo_block(convo):
 
 # ---------------------------------------------------------------------------
 # The guard. A builder that loses the block fails HERE, on the next triage pass,
-# rather than in front of Atul on the fifth strike.
+# rather than in front of the owner on the fifth strike.
 # ---------------------------------------------------------------------------
 
 @contextmanager
@@ -933,7 +933,7 @@ def check(ping=False, quiet=False):
     """Return 0 when every builder carries every rule, every surface carries the one voice,
     and nobody retyped the ban.
 
-    `ping` is opt-in (triage passes it) so that running this by hand can never buzz Atul's
+    `ping` is opt-in (triage passes it) so that running this by hand can never buzz the owner's
     phone- a guard that cries wolf while it is being edited is a guard he learns to ignore.
     """
     failures = []
@@ -1006,7 +1006,7 @@ def _clear():
 
 
 # Prompt-rule drift, graded once against baxter_autobuild's severity table: it steers every
-# reply Atul reads, but nothing is DOWN, nothing has gone outward, and the repair is pure
+# reply the owner reads, but nothing is DOWN, nothing has gone outward, and the repair is pure
 # code that --selftest can prove. That is MEAGER. He never hears about it- a build does.
 DRIFT_SEVERITY = "meager"
 
@@ -1026,7 +1026,7 @@ DRIFT_VERIFY = f'python "{Path(__file__).resolve()}" --selftest'
 def _self_repair(failures):
     """Queue the build that fixes this drift. True when a repair now exists to fix it.
 
-    THE STANDING ORDER (Atul, 9th July): the moment Baxter notices a problem it queues a
+    THE STANDING ORDER (the owner, 9th July): the moment Baxter notices a problem it queues a
     build for it, with a priority it assigns itself. It does not flag a meager issue to him
     and it does not ask permission. Returning False is the ONLY thing that re-arms the ping-
     if no repair could be queued, the fault is unhandled and he must hear about it after all.
@@ -1051,7 +1051,7 @@ def _self_repair(failures):
 
 
 def _alarm(failures, ping=False):
-    """Record the drift, queue its repair, and speak to Atul only if speaking is warranted.
+    """Record the drift, queue its repair, and speak to the owner only if speaking is warranted.
 
     `ping` means "this is the live triage audit, you may act": a hand-run neither buzzes his
     phone NOR queues a build. That second half matters more than it looks- selftest() forces
@@ -1091,7 +1091,7 @@ def _alarm(failures, ping=False):
 
 
 def _ping(msg):
-    """The ONE outward call in this module- a prompt-rule drift alert to Atul. Returns True only
+    """The ONE outward call in this module- a prompt-rule drift alert to the owner. Returns True only
     if it actually left. Exit 3 is a DENIAL: baxter_say refused the claim, printed why, and sent
     nothing. Record the reason in the voiceless denial sink and do NOT stamp PINGED- the
     hour-cooldown must never begin on a ping that never went
@@ -1119,7 +1119,7 @@ def selftest():
     """Prove the guard BITES. A check that only ever passes catches no drift at all- which
     is how three copies of one rule survived five strikes. Never pings: the one case that
     exercises the live audit path (ping=True) stubs the outward call and redirects the queue,
-    so it can neither post to Atul nor write the real build queue."""
+    so it can neither post to the owner nor write the real build queue."""
     global ALERT, PINGED, subprocess
 
     assert check(quiet=True) == 0, "the live tree should be clean"
@@ -1128,7 +1128,7 @@ def selftest():
     from unittest.mock import MagicMock
     assert not isinstance(sys.modules.get("discord"), MagicMock), "stub leaked into sys.modules"
 
-    # 1. A fourth builder arrives carrying no rules- exactly the hole Atul asked me to close.
+    # 1. A fourth builder arrives carrying no rules- exactly the hole the owner asked me to close.
     with _discord_stubbed():
         import baxter_slash
     def _rogue_prompt(body, cid, mid):
@@ -1255,7 +1255,7 @@ def selftest():
         _bt.build_worker_prompt = _real_bp
     assert check(quiet=True) == 0, "the tree must be clean again once the prompt is restored"
 
-    # 4c. THE VOICE (Atul, 8th July: every AI adopts one Jarvis register). Same shape as the
+    # 4c. THE VOICE (the owner, 8th July: every AI adopts one Jarvis register). Same shape as the
     #     cases above: prove the guard BITES on each way the single source can stop being
     #     single. Every mutation is restored in BYTES, in a finally: a read_text/write_text
     #     round trip would rewrite every LF as CRLF and "restore" a file it had corrupted
@@ -1278,7 +1278,7 @@ def selftest():
 
     # An md surface whose fenced region goes stale must fail, and be named.
     _bytes_guarded(VAULT / "AGENTS.md",
-                   lambda raw: raw.replace(b"- Address Atul as `sir`.", b"- Be casual."),
+                   lambda raw: raw.replace(b"- Address the owner as `sir`.", b"- Be casual."),
                    "AGENTS.md's voice block has drifted",
                    "a stale md voice surface must FAIL the check")
 
@@ -1307,7 +1307,7 @@ def selftest():
     _c = VAULT / "CLAUDE.md"
     _raw = _c.read_bytes()
     try:
-        _c.write_bytes(_raw.replace(b"- Address Atul as `sir`.", b"- Be casual."))
+        _c.write_bytes(_raw.replace(b"- Address the owner as `sir`.", b"- Be casual."))
         assert check(quiet=True) == 1
         assert set_voice_md() == ["CLAUDE.md"], "set_voice_md restamped the wrong surfaces"
         assert check(quiet=True) == 0, "set_voice_md did not resettle the drifted surface"
@@ -1331,16 +1331,16 @@ def selftest():
         _keep = _p.read_bytes()
         assert set_voice_md([_p]) == [], f"the stamp rewrites an undrifted {_nl!r} surface"
         assert _p.read_bytes() == _keep, "a no-op stamp still changed the bytes"
-        _p.write_bytes(_keep.replace(b"- Address Atul as `sir`.", b"- Be casual."))
+        _p.write_bytes(_keep.replace(b"- Address the owner as `sir`.", b"- Be casual."))
         assert set_voice_md([_p]) == [_p.name], f"the stamp skipped a drifted {_nl!r} surface"
         assert _p.read_bytes() == _keep, f"the stamp lost the {_nl!r} endings of a surface"
         assert _eol(_p.read_bytes()) == _nl, "the stamped block carries the wrong ending"
 
     assert check(quiet=True) == 0, "the tree must be clean again after the voice cases"
 
-    # 5. THE TRIGGER, END TO END (Atul, 9th July). Drift must queue a REAL build through the
+    # 5. THE TRIGGER, END TO END (the owner, 9th July). Drift must queue a REAL build through the
     #    governor, at the priority its severity earned, carrying proof- and must say NOTHING
-    #    to Atul. The queue is redirected to a scratch file and the outward call is STUBBED:
+    #    to the owner. The queue is redirected to a scratch file and the outward call is STUBBED:
     #    a selftest that reaches baxter_say posts a false alert to him.
     import tempfile
     import types
@@ -1365,7 +1365,7 @@ def selftest():
         e = q[0]
         assert int(e["priority"]) == _ab.priority_of(DRIFT_SEVERITY), e
         assert e.get("verify"), "the auto-build carries no proof"
-        assert not calls, "pinged Atul for a meager issue"
+        assert not calls, "pinged the owner for a meager issue"
 
         # A second pass with the fault still present must REFRESH the entry, never fork one.
         assert check(ping=True, quiet=True) == 1
@@ -1398,7 +1398,7 @@ def selftest():
 
 
 if __name__ == "__main__":
-    # `--audit` is the triage pass (may ping Atul once an hour). A bare run is a dev check.
+    # `--audit` is the triage pass (may ping the owner once an hour). A bare run is a dev check.
     if "--selftest" in sys.argv:
         selftest()
         sys.exit(0)

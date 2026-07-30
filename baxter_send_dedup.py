@@ -2,7 +2,7 @@
 
 Baxter's live channel session was observed answering the SAME Discord message twice
 within a turn (04:12-04:16, 6th July) - double token burn, reads erratic. This is the
-code-level enforcement Atul asked for: a shared guard sitting on BOTH send paths that
+code-level enforcement the owner asked for: a shared guard sitting on BOTH send paths that
 Baxter uses to speak in his server, so a duplicate can't leave regardless of how the
 model behaves.
 
@@ -20,7 +20,7 @@ A send is a DUPLICATE when, inside a short window, either:
     plain (non-reply) sends match (CONTENT_WINDOW) - a literal double-send.
 
 A DISTINCT answer to a message already answered is NOT a duplicate (10th July). Rule 1
-used to key on (channel, reply_to) alone, so the live session's queue-time ack to Atul
+used to key on (channel, reply_to) alone, so the live session's queue-time ack to the owner
 consumed the one allowed reply and every build finishing inside 5h could not tell him it
 had landed - `baxter_say --reply-to` exited 0 printing "deduped ... - not sent", and lane 2
 (window_close_alert) had to force its landing reply through. The ack and the landing are
@@ -103,7 +103,7 @@ def _release_at(lock):
 
 @contextmanager
 def file_lock(path, timeout=5.0):
-    """THE one locking scheme (Atul, 9th July). Guards `path` with a sibling `path + '.lock'`
+    """THE one locking scheme (the owner, 9th July). Guards `path` with a sibling `path + '.lock'`
     using exactly the scheme _acquire() has always used- atomic O_CREAT|O_EXCL, a 30s steal of
     a stale holder, and fail-OPEN on timeout. Yields True if the lock is genuinely held, False
     if it timed out and the caller is proceeding unguarded. NEVER release a lock you didn't
@@ -226,7 +226,7 @@ def claim_ids(path, add=(), cap=200):
 
     On a WRITE FAILURE nothing landed, so nothing was won- the message stays unclaimed and the
     next 15s sweep retries it. On a mere LOCK TIMEOUT the merge did land (fail-open), so the
-    win stands: skipping there would answer Atul with silence, which is the worse failure."""
+    win stands: skipping there would answer the owner with silence, which is the worse failure."""
     global _DEGRADED
     with file_lock(path) as got:
         _ids, won, wfail = _merge_ids(path, add, cap)
@@ -316,7 +316,7 @@ def claim(channel, reply_to, content):
     can't be taken (stuck), fail OPEN and allow- a rare double beats a frozen assistant."""
     if not _acquire():
         # can't get the lock (a stuck holder). For a REPLY, fail CLOSED- skip it; the
-        # retry path (or Atul re-asking) recovers, and a double reply is the lethal case.
+        # retry path (or the owner re-asking) recovers, and a double reply is the lethal case.
         # For a plain proactive send, fail open so pings/alerts never freeze.
         if reply_to:
             return False, "lock-timeout- reply skipped to guarantee no double"
@@ -429,7 +429,7 @@ def _bash_hook():
                 "permissionDecisionReason": (
                     "Raw Discord sends are blocked. Reply ONLY via "
                     "baxter_say.py --reply-to <id> (it holds the double-send lock). "
-                    "A raw curl/urlopen bypasses the guard and can double-message Atul.")}}))
+                    "A raw curl/urlopen bypasses the guard and can double-message the owner.")}}))
     return 0
 
 # ---- the ledger-lock acceptance exam (--selftest-ledger) ----------------------------------
@@ -531,7 +531,7 @@ print(json.dumps({"pre": [m["id"] for m in pre], "won": won, "fresh": fresh,
 # Drives the REAL door- baxter_say.main()- in its own process, with urlopen stubbed. A child
 # is the only honest way to run it: main() reads sys.argv, and the module caches `_dedup` at
 # import, so STATE must be redirected before baxter_say is ever imported. Nothing here may
-# touch Atul's live dedup state or reach Discord.
+# touch the owner's live dedup state or reach Discord.
 _REPLY_CHILD = '''\
 import sys, os, io, json
 
@@ -543,7 +543,7 @@ import baxter_send_dedup as dedup
 dedup.STATE = state
 dedup.LOCK = state + ".lock"
 # containment, asserted before ANYTHING runs: a mis-set STATE would let this exam claim and
-# consume a real reply to Atul out of the live ledger.
+# consume a real reply to the owner out of the live ledger.
 assert os.path.dirname(os.path.abspath(dedup.STATE)) == tmpdir, "STATE escaped the temp dir"
 assert os.path.basename(tmpdir).startswith("bxr_dedup_exam_"), "STATE is not in the exam dir"
 
@@ -743,7 +743,7 @@ def selftest_ledger():
     claim, and the fast lane skips what the listener took. Returns 0 on pass, 1 on failure."""
     import sys, tempfile, shutil, subprocess
     tmp = tempfile.mkdtemp(prefix="baxter_ledger_")
-    before = _ledger_snapshot()             # arm 6: this exam must not touch Atul's live ledgers
+    before = _ledger_snapshot()             # arm 6: this exam must not touch the owner's live ledgers
     fails, notes = [], []
 
     def check(ok, name, detail=""):
@@ -828,7 +828,7 @@ def selftest_ledger():
         shutil.rmtree(tmp, ignore_errors=True)
 
     # --- arm 6: a selftest that wrote a live claim file could itself cause a missed reply to
-    # Atul, so this must stay a real assertion. It must ALSO ignore the fleet writing those
+    # the owner, so this must stay a real assertion. It must ALSO ignore the fleet writing those
     # files underneath it, which it does continuously. _exam_footprint_violations() is the
     # difference; --selftest-arm6 proves it still reddens when the redirect is removed.
     viol = _exam_footprint_violations(before, _ledger_snapshot(), time.time())
@@ -914,11 +914,11 @@ def selftest_reply():
     import tempfile, shutil
     tmp = tempfile.mkdtemp(prefix="bxr_dedup_exam_")
     # Guard the ONE live file this exam could plausibly corrupt- a mis-redirected STATE would
-    # consume a real reply to Atul. A HASH of it was the same race arm 6 carried: every
+    # consume a real reply to the owner. A HASH of it was the same race arm 6 carried: every
     # baxter_say send rewrites .baxter_send_dedup.json, so a hash arm here fails whenever a
     # live reply lands mid-run. Snapshot + footprint detector instead: this exam's own
     # fixtures (_RX_CH, _RX_MID_A/B) are named in _EXAM_FIXTURE_*, so containment breaking
-    # still reddens it, while a real send to Atul does not.
+    # still reddens it, while a real send to the owner does not.
     live = [STATE]
     before = _ledger_snapshot(live)
     fails = []
@@ -1101,7 +1101,7 @@ def selftest_rules():
 
 
 # ---- the arm-6 acceptance exam (--selftest-arm6) ------------------------------------------
-# Arm 6 asserts that --selftest-ledger leaves no mark on Atul's live ledgers. Such an arm is
+# Arm 6 asserts that --selftest-ledger leaves no mark on the owner's live ledgers. Such an arm is
 # worthless in two opposite directions, and this exam pins both:
 #   * TOO LOOSE- it passes even when the exam DOES write a live ledger. Proven false by an A/B
 #     red-proof: a contained copy of the two modules is run twice, identical but for the single
@@ -1113,7 +1113,7 @@ def selftest_rules():
 # Import order MATTERS and is not cosmetic: baxter_fast imports baxter_rules, which does its own
 # sys.path.insert(0, <real utils>) at line 31. Import baxter_fast first and the REAL
 # baxter_send_dedup is bound underneath it- the copy never loads, and the red-proof would run
-# against Atul's live STATE. _FASTLANE_CHILD imports dedup first for exactly this reason; the
+# against the owner's live STATE. _FASTLANE_CHILD imports dedup first for exactly this reason; the
 # probe mirrors it, and asserts on __file__ so a future reordering cannot pass silently.
 _ARM6_CHILD_PROBE = '''\
 import sys, os, json
@@ -1129,7 +1129,7 @@ print(json.dumps({"HANDLED": bf.HANDLED, "REACTED": bf.REACTED, "VAULT": bf.VAUL
 
 # The fleet, in miniature. Appends BENIGN ids to the copy's vault ledgers and records real sends
 # into its dedup state for `secs`, exactly as the fast lane, the listener and baxter_say do while
-# a live exam runs. .baxter_fast_reacted.json is seeded AT its cap of 300, as it is on Atul's
+# a live exam runs. .baxter_fast_reacted.json is seeded AT its cap of 300, as it is on the owner's
 # disk, so every append here also EVICTS its oldest id- the churn the old sha256 arm died on.
 _ARM6_CHURN_CHILD = '''\
 import sys, os, time
@@ -1146,7 +1146,7 @@ while time.time() < end:
     d.update_ids(fh, ["200000000000000%04d" % n], cap=200)
     d.update_ids(lh, ["300000000000000%04d" % n], cap=500)
     d.update_ids(fr, ["400000000000000%04d" % n], cap=300)   # at cap: appends AND evicts
-    d.record("111", "77%d" % n, "A real reply to Atul, number %d." % n)
+    d.record("111", "77%d" % n, "A real reply to the owner, number %d." % n)
     with open(sys.argv[4], "w") as f:                        # the parent TERMINATEs us, so the
         f.write(str(n))                                      # count cannot wait for the exit
     time.sleep(0.15)
@@ -1201,7 +1201,7 @@ def _arm6_tree(root, drop_redirect):
         f.write("raise SystemExit(0)\n")
 
     # Seed the copy's vault so rules (b) and (c) have something real to protect. fast_reacted is
-    # seeded AT its cap of 300, as it is on Atul's disk: every 👀 reaction the fleet sends while
+    # seeded AT its cap of 300, as it is on the owner's disk: every 👀 reaction the fleet sends while
     # an exam runs therefore evicts its oldest id, and rule (b) must forgive exactly that.
     for n, data in ((".baxter_fast_handled.json", {"ids": ["seed-fh-1", "seed-fh-2"]}),
                     (".baxter_listener_handled.json", {"ids": ["seed-lh-1"]}),
@@ -1367,7 +1367,7 @@ def _selftest_arm6():
     finally:
         shutil.rmtree(root, ignore_errors=True)
 
-    # containment, on the real tree: the red-proof must not have written Atul's ledgers.
+    # containment, on the real tree: the red-proof must not have written the owner's ledgers.
     real_fh = os.path.join(VAULT, ".baxter_fast_handled.json")
     check("9999999999" not in read_ids(real_fh),
           "containment: the sentinel is absent from the real .baxter_fast_handled.json")

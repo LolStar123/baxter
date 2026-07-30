@@ -1,5 +1,5 @@
 """baxter_lanes - shared 3-lane concurrency governor + Claude-session ledger for
-reply/channel continuation (Atul, 8th July).
+reply/channel continuation (the owner, 8th July).
 
 TWO jobs, one small module both the real-time listener (baxter_slash) and the
 #general fast-lane (baxter_fast) import so there is ONE source of truth:
@@ -8,24 +8,24 @@ TWO jobs, one small module both the real-time listener (baxter_slash) and the
      Big/project builds keep their OWN single-slot governor (.baxter_resume, unchanged);
      this ONLY bounds quick/routine replies so many normal tasks fan out to 3 parallel
      lanes instead of serialising behind one. Below the cap a worker starts instantly;
-     at the cap it waits briefly, then proceeds anyway (never DROP one of Atul's messages-
+     at the cap it waits briefly, then proceeds anyway (never DROP one of the owner's messages-
      a rare 4th lane beats silence). Lane files are stale-pruned so a crashed worker can
      never wedge a lane shut.
 
   2. SESSION LEDGER - so a channel / reply CONTINUES the same Claude conversation rather
      than cold-starting (his 1-lane complaint was really "fresh session loses context"):
        - non-#general channels -> ONE persistent MASTER session per channel; a new message
-         resumes the channel's whole context (Atul, 8th July 11:58 "one master convo per
+         resumes the channel's whole context (the owner, 8th July 11:58 "one master convo per
          channel, not new workers").
        - #general -> per-task (random one-offs), BUT a Discord REPLY to a Baxter answer
-         resumes THAT answer's session (Atul, 8th July 12:39 "reply continues the thread").
+         resumes THAT answer's session (the owner, 8th July 12:39 "reply continues the thread").
      Backed by the CLI's --session-id / --resume (proven headless: create a session with a
      known uuid, resume it later by the same uuid with full context intact).
 
 Files (all under the vault, git-ignored operational state):
   .baxter_lanes/               - lane lock dir (one lane-*.lock file per active worker)
-  .baxter_reply_threads.json   - {"channels": {cid: sid}, "messages": {atul_mid: sid},
-                                  "order": [atul_mid, ...]}  (messages LRU-capped)
+  .baxter_reply_threads.json   - {"channels": {cid: sid}, "messages": {owner_mid: sid},
+                                  "order": [owner_mid, ...]}  (messages LRU-capped)
 """
 import json
 import os
@@ -76,7 +76,7 @@ def _prune_lanes():
 def acquire_lane(wait_s=90):
     """Claim one of the 3 routine lanes. Returns a lane-file path (release it when done).
     Waits up to wait_s for a free lane; if still full, returns the path anyway (an
-    over-cap lane, logged)- Atul's message is never dropped for want of a slot. The claim
+    over-cap lane, logged)- the owner's message is never dropped for want of a slot. The claim
     is best-effort atomic via O_CREAT|O_EXCL on a uuid-named file, so two workers can't
     grab the same slot."""
     os.makedirs(LANES_DIR, exist_ok=True)
@@ -95,7 +95,7 @@ def acquire_lane(wait_s=90):
                 os.write(fd, str(os.getpid()).encode())
                 os.close(fd)
                 if over:
-                    _log(f"over-cap lane granted (>{MAX_LANES} busy)- not dropping Atul's msg")
+                    _log(f"over-cap lane granted (>{MAX_LANES} busy)- not dropping the owner's msg")
                 return path
             except FileExistsError:
                 continue   # uuid clash (astronomically rare)- retry
@@ -193,7 +193,7 @@ def set_message_session(mid, sid):
         _write(d)
 
 
-def plan_session(cid, is_reply=False, referenced_atul_mid=None):
+def plan_session(cid, is_reply=False, referenced_owner_mid=None):
     """Decide which Claude session a message should run in, and record the mapping.
     Returns (session_id, mode) where mode is 'create' (new --session-id) or 'resume'
     (--resume an existing one).
@@ -201,7 +201,7 @@ def plan_session(cid, is_reply=False, referenced_atul_mid=None):
       non-#general channel -> the channel's persistent MASTER session (create once,
                               resume forever) - one master convo per channel.
       #general             -> per-task; a REPLY to a Baxter answer resumes that answer's
-                              session (looked up by the ORIGINAL Atul message it replied
+                              session (looked up by the ORIGINAL the owner message it replied
                               to), otherwise a fresh per-task session.
     """
     cid = str(cid)
@@ -213,8 +213,8 @@ def plan_session(cid, is_reply=False, referenced_atul_mid=None):
         set_channel_session(cid, sid)
         return sid, "create"
     # #general
-    if is_reply and referenced_atul_mid:
-        sid = session_for_message(referenced_atul_mid)
+    if is_reply and referenced_owner_mid:
+        sid = session_for_message(referenced_owner_mid)
         if sid:
             return sid, "resume"
     return str(uuid.uuid4()), "create"

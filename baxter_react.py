@@ -1,11 +1,11 @@
 """baxter_react — add or remove a reaction on a Discord message, for Baxter's message
 lifecycle receipts: 👀 seen/logged  ->  ⚙️ actively working  ->  ✅ done (⚙️ removed).
-Bot token only, Atul's own server. Not double-send-guarded (reactions are idempotent).
+Bot token only, the owner's own server. Not double-send-guarded (reactions are idempotent).
 
   python baxter_react.py --add    <channel> <message_id> <emoji>
   python baxter_react.py --remove <channel> <message_id> <emoji>
   python baxter_react.py --done   <channel> <message_id>      # remove ⚙️, add ✅ (atomic 'completed')
-  python baxter_react.py --handsoff <channel> <message_id>    # remove ⚙️, add 🤚 (atomic 'seen, not mine, no action needed'- Atul, 8th July: distinct from the tick)
+  python baxter_react.py --handsoff <channel> <message_id>    # remove ⚙️, add 🤚 (atomic 'seen, not mine, no action needed'- the owner, 8th July: distinct from the tick)
 """
 import json, sys, time, urllib.error, urllib.request, urllib.parse
 

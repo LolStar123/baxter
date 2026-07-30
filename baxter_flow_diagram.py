@@ -1,4 +1,4 @@
-"""Render the big-build queue/lane flow as a one-page landscape PDF for Atul.
+"""Render the big-build queue/lane flow as a one-page landscape PDF for the owner.
 
 The page is DERIVED, never transcribed: `LANE_COUNT`, the `PRIO_*` order, `WORKER_BUDGET`
 and a real `HUB_FILES` entry are read out of `baxter_usage` at RENDER time, so the day the
@@ -113,7 +113,7 @@ def _layout():
     n = _lane_count()
     hub = sorted(getattr(g, "HUB_FILES", ["utils/baxter_fast.py"]))[0]
 
-    ask = ["Atul names a", "big task.", "It is never", "run ad-hoc."]
+    ask = ["the owner names a", "big task.", "It is never", "run ad-hoc."]
     plan = ["Writes the PRD", "and SEALS the", "acceptance test", "before any code", "is written."]
     queue = ["priority-ordered:",
              f"{getattr(g, 'PRIO_URGENT', 1)} urgent   {getattr(g, 'PRIO_RESUME', 2)} resume",
@@ -123,7 +123,7 @@ def _layout():
              "--touch declares the", "touch-set, or --solo"]
     gates = [
         ("Usage gate", ["big work stops", "at 80%; vitals", "only at 90%"]),
-        ("Human gate", ["gated_on: atul", "holds it until", "--ungate"]),
+        ("Human gate", ["gated_on: owner", "holds it until", "--ungate"]),
         ("Capacity", ["lane_capacity()", f"LANE_COUNT = {n}",
                       f"WORKER_BUDGET = {getattr(g, 'WORKER_BUDGET', 9)}"]),
     ]
@@ -134,7 +134,7 @@ def _layout():
     ]
     outcome = [
         ("Verify gate", ["the sealed exam", "runs after the", "worker exits"]),
-        ("Landed", ["announced to Atul", "and the", "activity-log"]),
+        ("Landed", ["announced to the owner", "and the", "activity-log"]),
     ]
 
     nodes = []
@@ -267,7 +267,7 @@ def render(out_path):
     ax.text(yx + 0.008, (clash_bot + YIELD_VIA) / 2.0, ".yield", ha="left", va="center",
             fontsize=9, color=SLATE, style="italic")
 
-    fig.text(0.5, 0.038, "Lanes are numbered the way Atul reads them, counting from one: "
+    fig.text(0.5, 0.038, "Lanes are numbered the way the owner reads them, counting from one: "
                          "lane_label() adds one to the internal index.",
              ha="center", va="center", fontsize=9, color=SLATE)
 

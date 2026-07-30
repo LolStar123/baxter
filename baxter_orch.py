@@ -1,6 +1,6 @@
 """baxter_orch- the VERTICAL tier over the build lanes: PLAN -> EXECUTE -> REVIEW.
 
-Atul, 9th July 00:11: "You have too much on your plate. You need more levels of
+the owner, 9th July 00:11: "You have too much on your plate. You need more levels of
 hierarchy and more 'slave' sort of bots doing grunt work tasks for you so things are
 easier. Like adding grease to a system."
 
@@ -44,7 +44,7 @@ This adds DEPTH INSIDE a lane, not more lanes. Nothing here decides what runs.
   is `passed` only on a check the lead observed. A step whose worker swore success but
   whose check the lead never ran is `unverified`- a state of its own, never a pass.
 
-  Atul, 9th July 01:37, on this build specifically: "Remember the check confirmation
+  the owner, 9th July 01:37, on this build specifically: "Remember the check confirmation
   rule. Do that rigorously and extensively." This layer spawns other workers, so an
   unverified claim here is inherited by everything it spawns. That is why the trust
   never flows upward: a claim is data, a check is evidence.
@@ -522,7 +522,7 @@ def _exam_touches(cmd):
       `python "<abs>/<mod>.py" --selftest`   exactly `utils/<mod>.py/selftest`
 
     PARSE, NEVER IMPORT. An exam's module scope reaches `_say`, `enqueue` and the real build
-    queue; importing one to inspect it would post to Atul's room and file work, from inside a
+    queue; importing one to inspect it would post to the owner's room and file work, from inside a
     guard whose whole job is to run before anything happens. `ast.parse` on the file's TEXT
     sees everything we need and executes not a line of it.
 
@@ -580,7 +580,7 @@ def _spawned_lane(entry):
 
 
 def _standdown_line(entry, outside):
-    """The one line Atul reads when a lane stands down on a clash. Pure: no I/O, no _say.
+    """The one line the owner reads when a lane stands down on a clash. Pure: no I/O, no _say.
 
     He gets his own lane numbering (1..10) and the real conflict- the file and function
     another build is already editing- with the vault's `utils/` prefix off the front. The
@@ -827,7 +827,7 @@ def record_check(rf, kind, value):
         vetted, why = _bv.vet_verify_cmd(value, paths_must_exist=True)
         if vetted is None:
             # Into the VERIFIER's own log, never `.baxter.log`- that one is the build record
-            # Atul reads, and a refusal is a gate decision, filed beside every other one.
+            # the owner reads, and a refusal is a gate decision, filed beside every other one.
             _bv._log(f"REFUSED a verify command on {Path(rf).name}- {why}: {_flat(value)[:120]}")
             return bool(entry.get("acceptance_sealed")), (
                 f"REFUSED- your verify command was NOT recorded: {why}\n"
@@ -960,7 +960,7 @@ def _fanout_shape(entry, steps):
 
 def sub_brief(step, entry):
     """One sub-worker's brief. It executes ONE step. It never announces, never queues,
-    never speaks to Atul- the lead owns every word that leaves the lane."""
+    never speaks to the owner- the lead owns every word that leaves the lane."""
     touch = step.get("touch") or []
     return (
         "You are a Baxter SUB-WORKER under a build lead. You have exactly one step of a "
@@ -974,7 +974,7 @@ def sub_brief(step, entry):
         "- Edit ONLY the files above. Another sub-worker is editing the others right now.\n"
         "- Do NOT announce anything, do NOT post to Discord, do NOT queue work, do NOT "
         "touch the lane journal or the build queue. The lead does all of that.\n"
-        "- Do NOT message Atul or anyone else. No outward action, ever.\n"
+        "- Do NOT message the owner or anyone else. No outward action, ever.\n"
         "- Prove your own step by running it before you answer. Your claim is not evidence: "
         "the lead re-runs the check above itself and reads the exit code. Saying you are done "
         "when you are not simply fails the step slower.\n\n"
@@ -1094,7 +1094,7 @@ def fanout(entry, steps=None, runner=None, check_runner=None, max_par=None,
 def selftest():
     """Drive the real functions. Every claude spawn and every shell check is stubbed, so
     nothing outward can fire and nothing real is built- the 9th-July lesson that a
-    selftest reaching a live `_say` posted a false line into Atul's room."""
+    selftest reaching a live `_say` posted a false line into the owner's room."""
     import shutil
     import tempfile
     tmp = Path(tempfile.mkdtemp(prefix="orchtest-"))

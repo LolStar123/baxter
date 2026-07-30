@@ -11,7 +11,7 @@ OPEN once meters are >45 min stale. ccusage was tested and DEMOTED (5th July): i
 block estimate read 3% when the real meter said 48%- estimates must never drive
 stop decisions. It stays installed (`ccusage blocks`) for token telemetry only.
 
-Thresholds carry Atul's 8th-July 15:34 FINAL recode ("what the fuck do you mean 55%?
+Thresholds carry the owner's 8th-July 15:34 FINAL recode ("what the fuck do you mean 55%?
 builds pause at 80%. shrink to bare minimum at 90%. just vitals like the coc bot etc.
 fully recode this")- the sliding by-time-left session curve is RETIRED, flat bands only.
 
@@ -33,7 +33,7 @@ re-armed the ping bands every flap. Window identity is now jitter-tolerant
 (WINDOW_TOL) and every alert key carries a hard resend cooldown (ALERT_COOLDOWN)-
 each alert fires ONCE per state change, full stop.
 
-THE BANDS (Atul's 8th-July 15:34 FINAL spec- flat, no curve, on the MAX 20x plan;
+THE BANDS (the owner's 8th-July 15:34 FINAL spec- flat, no curve, on the MAX 20x plan;
 the 60% drain band added 9th July):
       <60   -> everything runs, the queue drains
       60-80 -> SOFT STOP: the build lanes DRAIN. No NEW lane is opened; each in-flight
@@ -48,7 +48,7 @@ the 60% drain band added 9th July):
 
 The BIG-TASK QUEUE (5th July, his 12:00 + 14:33 order- "never have multiple large
 tasks happening at the same time"): every project-class task lives in
-.baxter_task_queue.json, priority-ordered (1 Atul-says-first, 2 interrupted
+.baxter_task_queue.json, priority-ordered (1 the owner-says-first, 2 interrupted
 resumes, 5 default, 8 background). --halt re-queues interrupted work at priority
 2, so started work finishes first.
 
@@ -72,13 +72,13 @@ CLI:
   python baxter_usage.py --halt "<task>" "<next step>" [--note <path>] [--state "<summary>"] [--touch "a,b,@c"]
                                          -> re-queue interrupted work (priority 2);
                                             triage restarts it when a lane + curve allow
-  python baxter_usage.py --queue "<task>" "<first step>" [--note <path>] [--state "<summary>"] [--priority N] (--touch "utils/baxter_usage.py/ceiling,utils/coc_bot/,@probe" | --solo) [--gate atul]
+  python baxter_usage.py --queue "<task>" "<first step>" [--note <path>] [--state "<summary>"] [--priority N] (--touch "utils/baxter_usage.py/ceiling,utils/coc_bot/,@probe" | --solo) [--gate owner]
                                          -> add a big task to the queue (default priority 5);
-                                            --gate atul parks it until he says go.
+                                            --gate owner parks it until he says go.
                                             A touch-set is MANDATORY: declare --touch, or say
                                             --solo out loud. Omitting both is refused (exit 2)
   python baxter_usage.py --ungate "<task substring>"
-                                         -> Atul said go: lift the human gate, the pump may run it
+                                         -> the owner said go: lift the human gate, the pump may run it
   python baxter_usage.py --queue-list    -> show the queue in run order (+ slot in band, touch-sets, gates)
   python baxter_usage.py --move "<id or substring>" <up|down|top|bottom|N> [--force]
                                          -> reorder one entry WITHIN its priority band (N is a
@@ -121,7 +121,7 @@ STATUSLINE = VAULT / ".baxter_statusline.json"     # Claude Code's own session J
                                                    # server truth at ZERO HTTP cost.
 STOP_FLAG = VAULT / ".baxter_stop"                 # HARD stop: its existence gates ALL work
 
-# HARD-ENFORCE bands- the GOVERNOR (Atul's 8th-July 15:34 FINAL recode: "builds pause
+# HARD-ENFORCE bands- the GOVERNOR (the owner's 8th-July 15:34 FINAL recode: "builds pause
 # at 80%. shrink to bare minimum at 90%. just vitals like the coc bot etc"). Flat
 # numbers, no sliding curve- four states by session %, of which only the last three
 # are HARD (they write .baxter_stop and the watchdog kills on them):
@@ -130,13 +130,13 @@ STOP_FLAG = VAULT / ".baxter_stop"                 # HARD stop: its existence ga
 #            build runs to completion untouched. Nothing is killed, no stop flag is
 #            written, `blocked()` says nothing. Lives ONLY in lane_capacity().
 #   80-90 -> BIG tasks pause into the queue; routine (small asks) + vital still run
-#   90+   -> BARE MINIMUM: vitals only (CoC bot, emergencies, answering Atul).
+#   90+   -> BARE MINIMUM: vitals only (CoC bot, emergencies, answering the owner).
 #            Vitals NEVER stop- the old everything-stops HARD FLOOR is RETIRED.
 # --override / --breach / --breach-step each lift the soft stop as well as the 80% one:
-# when Atul says "go big" at 75% the pump must actually open a lane, not print a
+# when the owner says "go big" at 75% the pump must actually open a lane, not print a
 # confirmation over a silent no-op.
 SOFT_STOP_SESSION = 70.0     # >=70% -> lanes drain: no NEW lane opens, in-flight lanes finish.
-                             # 60 -> 70 on Atul's 10th-July order ("auto slow feature to occur
+                             # 60 -> 70 on the owner's 10th-July order ("auto slow feature to occur
                              # at 70"): at 64% the board collapsed to ONE lane with 16 runnable.
                              # RE-APPLIED 10th July after a softstop-exam repair lane reverted it
                              # to 60 to satisfy a STALE exam- the exam + CLAUDE.md are now 70 too,
@@ -159,7 +159,7 @@ FLOOR_WEEKLY = 200.0         # RETIRED (8th July)- vitals never stop on weekly e
 SESSION_TIERS = (BIG_STOP_SESSION, ROUTINE_STOP_SESSION)   # 80 / 90
 WEEKLY_TIERS = (BIG_STOP_WEEKLY, ROUTINE_STOP_WEEKLY)      # 88 / 93
 BREACH_STEP = VAULT / ".baxter_breach_step"        # STEPPED breach marker (session + weekly ceiling)
-QUIET95 = VAULT / ".baxter_quiet95"                # 95-ONLY window (Atul, 8th July MAX period):
+QUIET95 = VAULT / ".baxter_quiet95"                # 95-ONLY window (the owner, 8th July MAX period):
 QUIET95_WARN = 95.0                                # while armed, mute the 80/90 band pings and
                                                    # fire a SINGLE session ping- a heads-up at 95%
 INTERRUPTED = VAULT / ".baxter_interrupted.json"   # LEGACY inbox- drained into the queue
@@ -173,14 +173,14 @@ RESUME_DIR = VAULT / ".baxter_resume"   # resume-worker journals (mtime = heartb
 CRED = Path.home() / ".claude" / ".credentials.json"
 SAY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_say.py"
 
-# POLL CADENCE (Atul, 6th July: "poll significantly slower in downtimes, a bit slower in
+# POLL CADENCE (the owner, 6th July: "poll significantly slower in downtimes, a bit slower in
 # uptimes; getting rate-limited is EXTREMELY dangerous"). NO build-duration extrapolation-
 # builds are non-linear, so the ONLY signal is "is a worker running right now" (uptime) vs
 # not (downtime). The KILL check still runs every 5-15s but reads the CACHED .baxter_stop
 # (a local file, no network); only the OAuth endpoint hit is on these cadences, and the hard
 # floor caps bursts. Measured 6 Jul: the endpoint 429s under sustained polling and exposes no
 # limit header (only Retry-After: 0), so we stay deliberately conservative.
-# FLAT PERMA-POLL (Atul, 8th July 23:45: "Make it just perma poll every 30 mins. Just every
+# FLAT PERMA-POLL (the owner, 8th July 23:45: "Make it just perma poll every 30 mins. Just every
 # 30 mins dont worry anything else"). The uptime/downtime split is RETIRED- one cadence, always.
 # BUILD_PROBE_EVERY is kept equal to PROBE_EVERY so every caller stays valid; never re-split them.
 #
@@ -195,7 +195,7 @@ SAY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_say.py"
 # (2,239 real 429s in one day); PROBE_FLOOR still bounds every burst.
 PROBE_FLOOR = 60         # HARD burst floor: never hit the OAuth endpoint more than once per this,
                          # even on a FORCED probe. Stacked forced probes are what tripped the 429s.
-BIG_FRESH = 600          # THE fail-closed line for big work (Atul, 9th July 00:35: "We are literally at
+BIG_FRESH = 600          # THE fail-closed line for big work (the owner, 9th July 00:35: "We are literally at
                          # 60% usage??? Usage governor is faulty. Fix"). A big burn holds when the last
                          # GOOD read is older than 10 min- a read that old can hide a jump over a wall
                          # (the 6th-July false-low: a cached 65% while reality was 75%). It does NOT hold
@@ -229,7 +229,7 @@ RETRY_EVERY = 120        # seconds between attempts after a normal failed probe
 RL_BACKOFF = 300         # after a 429 (rate-limited): hold 5 min before retrying- a hard cool-off
 STALE_AFTER = 2700       # meters older than 45 min -> fail OPEN (never freeze the machine on a dead probe)
 STALE_ERR_ALERT = 600    # a probe error that PERSISTS this long (last good read older than 10 min) ->
-                         # ping Atul once (a real rate-limit/outage is freezing the %, not a transient blip)
+                         # ping the owner once (a real rate-limit/outage is freezing the %, not a transient blip)
 STATUSLINE_SCALE_TOL = 15.0  # a push and an OAuth read taken seconds apart must agree within this many
                              # points or the dump is not what we think it is. The docs say
                              # used_percentage runs 0-100; if it were ever 0-1, an adopted 0.73 would
@@ -259,7 +259,7 @@ WINDOW_TOL = 900         # resets_at within 15 min = SAME window (the OAuth endp
                          # jitters the timestamp ~1 min poll-to-poll; exact-match
                          # comparison re-armed the bands every poll and machine-gunned
                          # the same 🛑 ping- his 5th-July 10:59 "100 of these" strike)
-RESET_CATCHUP = 1800     # RESET-ANCHORED WAKE window (Atul, 8th July 21:34: "auto wake at
+RESET_CATCHUP = 1800     # RESET-ANCHORED WAKE window (the owner, 8th July 21:34: "auto wake at
                          # 9:30... why 9:34"). Once the stored session_resets_at has passed
                          # but no fresh meter has landed for the new window, force a probe
                          # NOW (bypassing the 20-min downtime cadence) rather than noticing
@@ -274,13 +274,13 @@ OUTAGE_NOTICE = 2700     # a gap between CLEAN reads past this = Baxter was blin
                          # cadence to 540 would have silently dragged this OUTWARD Discord alert
                          # from 2700s to 1440s and made it ~1.9x more sensitive- Baxter reporting
                          # outages that are not outages. What counts as an outage is a fact about
-                         # Atul's machine, not about how often we poll it. Atul sketched "~20 min"
+                         # the owner's machine, not about how often we poll it. the owner sketched "~20 min"
                          # when the cadence was 20; 45 min is the first gap that cannot be
                          # explained by any cadence we run plus jitter.
 
 # The percentage-free half of a band ping. A 95-only quiet window may mute the NUMBER
 # ("usage 82%"- a nag he asked to silence); it may never mute THIS- Baxter reporting that
-# it has stopped or resumed doing work (Atul, 9th July 07:08: "I know we hit 80% usage.
+# it has stopped or resumed doing work (the owner, 9th July 07:08: "I know we hit 80% usage.
 # But you never pinged that over"). Keyed by session band: 1 = big-stop, 2 = vital-only.
 SESSION_STATE_LINES = {
     1: "⏸️ Builds and big tasks paused- routine + vitals still run. Resets {t}.",
@@ -312,7 +312,7 @@ def _log(msg):
 
 
 def _in_quiet():
-    """Quiet hours SCRAPPED (Atul, 6th July 22:06: "scrap the quiet hours rule- I want pings
+    """Quiet hours SCRAPPED (the owner, 6th July 22:06: "scrap the quiet hours rule- I want pings
     when they are mandated"). Always False now- hour-of-day suppresses NOTHING; every mandated
     ping and the resume ack fire whenever due, day or night. The band-crossing gate +
     ALERT_COOLDOWN already prevent spam, so a mandated ping is never noise. (Kept as a function
@@ -322,7 +322,7 @@ def _in_quiet():
 
 def _say(msg):
     """One-line governor ping to #general (mention = phone push). No night gate-
-    mandated pings fire any hour (quiet hours scrapped, Atul 6th July); _in_quiet()
+    mandated pings fire any hour (quiet hours scrapped, the owner 6th July); _in_quiet()
     is always False now but kept as the single flip-point if he ever reinstates it.
 
     Returns True only if it actually left. Exit 3 is a DENIAL: baxter_say refused the claim,
@@ -426,7 +426,7 @@ def _fetch():
     session = d.get("five_hour") or {}
     weekly = d.get("seven_day") or {}
     # per-model scoped weekly limits can be tighter than the overall meter- gate on the max.
-    # Fable is DISREGARDED (Atul's 5th-July order- he runs on Opus now, the Fable scoped
+    # Fable is DISREGARDED (the owner's 5th-July order- he runs on Opus now, the Fable scoped
     # meter is phantom and must never gate a build).
     def _is_fable(l):
         return (((l.get("scope") or {}).get("model") or {}).get("display_name") or "").lower() == "fable"
@@ -567,7 +567,7 @@ def _fmt_left(hours):
 
 
 def ceiling(hours_left):
-    """Big-task stop threshold- FLAT 80 (Atul, 8th July 15:34: "builds pause at 80%.
+    """Big-task stop threshold- FLAT 80 (the owner, 8th July 15:34: "builds pause at 80%.
     fully recode this"). The sliding by-time-left curve (55/70/80) is RETIRED- it
     announced 'builds pause again at 55%' after a reset and he killed it on the spot.
     Signature kept (hours_left ignored) so every caller stays valid."""
@@ -589,7 +589,7 @@ def _fmt_gap(secs):
 
 
 def _fmt_clock(iso):
-    """UK-local '11:50am' style for alert lines (Atul's locked format, 5th July 7:17am)."""
+    """UK-local '11:50am' style for alert lines (the owner's locked format, 5th July 7:17am)."""
     try:
         t = datetime.fromisoformat(iso).astimezone()
         return t.strftime("%I:%M%p").lower().lstrip("0")
@@ -612,7 +612,7 @@ def _same_window(marker, resets_at):
 
 def _reset_due(old):
     """True when a stored window's reset time has just passed but no fresh meter
-    reflecting the NEW window has landed yet- the '9:34 not 9:30' Atul flagged
+    reflecting the NEW window has landed yet- the '9:34 not 9:30' the owner flagged
     (8th July 21:34). Anchored to the stored resets_at stamps (never a hardcoded 9:29
     clock); self-clears the instant a fresh fetch moves them into the future, since the
     new resets_at is then ahead of now and `passed` goes negative. Bounded by
@@ -643,7 +643,7 @@ def _fire_alert(ping, key, msg):
     """Cooldown-guarded one-line alert. Sends msg unless this key fired within
     ALERT_COOLDOWN, then stamps ping['sent'][key]. Module-level so both _pings
     (band/close/resume) and probe()'s error path share one anti-spam backstop-
-    spam is a bug, silence isn't (Atul's 5th-July strike)."""
+    spam is a bug, silence isn't (the owner's 5th-July strike)."""
     last = (ping.get("sent") or {}).get(key)
     try:
         if last and (datetime.now() - datetime.fromisoformat(last)).total_seconds() < ALERT_COOLDOWN:
@@ -682,7 +682,7 @@ def window_close_alert(ping, snap, pct, tstr, fire):
 
 def _pings(snap, prev_ping, prev_updated=None):
     """Band-crossing + window-closing alerts. Fires only on upward state change.
-    Format LOCKED by Atul (5th July 7:17am): ONE line- emoji + number + reset time
+    Format LOCKED by the owner (5th July 7:17am): ONE line- emoji + number + reset time
     + action. Times UK-local '11:50am' style. Never multi-line.
     ANTI-SPAM (his 5th-July 10:59 strike, ~13 identical pings in an hour): window
     identity uses _same_window (jitter-tolerant), and _fire refuses to resend the
@@ -735,7 +735,7 @@ def _pings(snap, prev_ping, prev_updated=None):
 
     # new window -> bands reset silently before any crossing check. If the PRIOR
     # window had paused big tasks (band>=1), the reset means held work resumes-
-    # arm a one-line 'waking up' ack (Atul, 6th July: expected a reset+resume ping
+    # arm a one-line 'waking up' ack (the owner, 6th July: expected a reset+resume ping
     # on wake and got none- the governor only ever pinged on usage CLIMBING).
     if not _same_window(ping.get("session_marker"), snap["session_resets_at"]):
         if int(ping.get("session_band", 0)) >= 1:
@@ -747,7 +747,7 @@ def _pings(snap, prev_ping, prev_updated=None):
     # MEMBERSHIP keyed to the current window, NOT the strict upward edge. The old
     # `band > prev_band` fired ONCE- if that single poll was missed or clobbered by a
     # concurrent writer, the ping was lost for the whole window (exactly why the 90%
-    # lockdown never reached Atul). Now: if pct sits in a band and that band hasn't been
+    # lockdown never reached the owner). Now: if pct sits in a band and that band hasn't been
     # announced THIS window, it fires- a lost poll simply re-fires on the next one. Only
     # the highest crossed band speaks; lower ones are stamped silently. Each stamp stores
     # the WINDOW marker, so a new window auto-re-arms every band (and probe()'s file lock
@@ -755,7 +755,7 @@ def _pings(snap, prev_ping, prev_updated=None):
     #
     # TWO MESSAGES, ONE LINE (the 9th-July bug). A live 95-only quiet window made the whole
     # band ping fall through to `pass`- and then stamped the band as announced anyway, so it
-    # never re-fired. Atul crossed 80%, big work stopped, and nothing ever told him.
+    # never re-fired. the owner crossed 80%, big work stopped, and nothing ever told him.
     #   * the PERCENTAGE ("usage 82%") is a nag- the quiet window may mute it.
     #   * the STATE ("big tasks paused" / "running again") is Baxter saying it has stopped or
     #     resumed WORK. That is never silenceable, by any mute.
@@ -797,7 +797,7 @@ def _pings(snap, prev_ping, prev_updated=None):
     ping["session_band"] = band
     ping["session_state"] = band    # survives the window reset above- the state line's latch
 
-    # 95-ONLY window warning (Atul, 8th July MAX period): while the toggle is armed the
+    # 95-ONLY window warning (the owner, 8th July MAX period): while the toggle is armed the
     # 80/90 pings above are muted and THIS is the sole session usage ping- one heads-up
     # at 95%. Window-keyed like the bands (fires once per window, re-fires if a poll is
     # lost, re-arms on reset). Fired independently of SESSION_PING_BANDS so 95 works even
@@ -828,7 +828,7 @@ def _pings(snap, prev_ping, prev_updated=None):
     window_close_alert(ping, snap, pct, tstr, _fire)
 
     # waking-up ack: a mandated ping- fires any hour now quiet hours are scrapped
-    # (Atul, 6th July: he wants mandated pings, resume included, whenever they're due).
+    # (the owner, 6th July: he wants mandated pings, resume included, whenever they're due).
     # The flag survives every poll until it's delivered. (_in_quiet() is the flip-point
     # if he ever reinstates a night hold- always False today.)
     if ping.get("resume_pending") and not _in_quiet():
@@ -942,12 +942,12 @@ def probe(force=False):
             return old
         finally:
             _lock_release(lock)
-    # HARD BURST FLOOR (Atul, 6th July- rate-limiting is dangerous): never hit the OAuth
+    # HARD BURST FLOOR (the owner, 6th July- rate-limiting is dangerous): never hit the OAuth
     # endpoint more than once per PROBE_FLOOR, even on a FORCED probe. Bursts of stacked
     # forced probes are what tripped the 429s. force bypasses the CADENCE, never this floor.
     if att_age < PROBE_FLOOR:
         return old
-    # RESET-ANCHORED WAKE (Atul, 8th July 21:34- "auto wake at 9:30, why 9:34"). When a
+    # RESET-ANCHORED WAKE (the owner, 8th July 21:34- "auto wake at 9:30, why 9:34"). When a
     # stored window's reset time has just passed but no fresh meter has landed yet, bypass
     # the downtime cadence and fetch NOW, so the reset is noticed- resume ack fired + curve
     # reopened for the queue pump- within ~60s of the reset instant, not up to PROBE_EVERY
@@ -971,7 +971,7 @@ def probe(force=False):
     # RETRY_EVERY. Never hammer a rate-limited endpoint- that only deepens the 429.
     # BUT a forced probe on a STALE meter must be able to break the cool-off (9th July):
     # that call is a gate check trying to recover a wedged meter, and if it can't, big work
-    # fails closed forever on an error the backoff won't let us clear- the deadlock Atul hit.
+    # fails closed forever on an error the backoff won't let us clear- the deadlock the owner hit.
     # It breaks the cool-off ONLY once the last good read is past BIG_FRESH, i.e. only when
     # something is actually blocked. While the good read is still fresh there is nothing to
     # recover- the bands decide off it- so we honour the cool-off and stay off a sore endpoint.
@@ -1003,7 +1003,7 @@ def probe(force=False):
             # observable. A URLError/timeout has neither, and records status None rather
             # than inventing one. This is evidence only; the backoff above is unchanged.
             old["_http"] = _http_snap(getattr(e, "code", None), getattr(e, "headers", None))
-            # SUSTAINED-error alert (Atul, 7th July: a live 429 held silently, no ping-
+            # SUSTAINED-error alert (the owner, 7th July: a live 429 held silently, no ping-
             # rate-limiting is dangerous, he wants to be told). A transient blip stays
             # silent; but once the last GOOD read is older than STALE_ERR_ALERT the % is
             # genuinely FROZEN- and that is also the moment big work starts failing closed
@@ -1096,7 +1096,7 @@ def _big_meter_hold(snap=None):
     """The SINGLE fail-closed test for big work. Returns a reason string when a big task
     must HOLD for want of a trustworthy meter, else None.
 
-    Gates on the AGE of the last good read, never on the `error` flag (Atul, 9th July).
+    Gates on the AGE of the last good read, never on the `error` flag (the owner, 9th July).
     Under BIG_FRESH the last known percentages are recent enough to trust and the bands
     decide off them- an errored probe on top of a fresh read blocks nothing. Past it we
     cannot prove we're under a wall, so a big burn holds until a clean read lands.
@@ -1158,7 +1158,7 @@ def check(task_class="project", probe_if_stale=True, lane=None):
         except Exception:
             age = 1e9
     if cls != "project" and age > STALE_AFTER:
-        # Fail-OPEN keeps LIGHT work (briefs, answering Atul) alive on a dead probe.
+        # Fail-OPEN keeps LIGHT work (briefs, answering the owner) alive on a dead probe.
         _log(f"meters stale ({int(age)}s)- failing open for {cls}")
         return {"allowed": True, "reason": "meters unavailable- failing open"}
     pct = float(snap.get("session_pct") or 0)
@@ -1235,7 +1235,7 @@ def enforce(probe_if_stale=True):
         # Self-rate-limited: probe() refreshes only on its uptime/downtime cadence and is
         # hard-floored against bursts, so calling it every 15s beat is safe- it hits the
         # endpoint only when its own cadence allows. This replaces the old force-probe that
-        # fired every beat and hammered the endpoint into 429s (Atul, 6th July).
+        # fired every beat and hammered the endpoint into 429s (the owner, 6th July).
         snap = probe()
     # A failed probe leaves stale (possibly false-low) values. Don't LIFT a hard stop
     # on that- hold the last enforced level until a clean read lands (6 Jul false-low
@@ -1282,7 +1282,7 @@ def enforce(probe_if_stale=True):
     return level
 
 def _override_active():
-    """Atul's breach authorisation. A .baxter_override file with a future 'until'
+    """the owner's breach authorisation. A .baxter_override file with a future 'until'
     lifts the BIG (80%) stop up to the 90% vital-only wall- so authorised big work
     runs the 80-90 band. It NEVER lifts the 90% wall (the final 10% stays vital-only
     unless he clears the flag himself). Returns the remaining minutes, or None."""
@@ -1297,7 +1297,7 @@ def _override_active():
         return None
 
 def _breach_active():
-    """Atul's full-breach authorisation (the /breach command). A .baxter_breach file
+    """the owner's full-breach authorisation (the /breach command). A .baxter_breach file
     with a future 'until' lifts EVERY hard band (big at 80 AND the 90% vital-only
     wall) so authorised work of any class can run at any %. Stronger than --override,
     which only lifts the 80->90 big band. Returns minutes left, or None. Breach is
@@ -1313,7 +1313,7 @@ def _breach_active():
         return None
 
 def _quiet95_active():
-    """Atul's 95-only window (8th July, the first MAX period: "only warn me at 95% for
+    """the owner's 95-only window (8th July, the first MAX period: "only warn me at 95% for
     this period, dont worry about 80 and 90"). A .baxter_quiet95 file with a future
     'until' mutes the 80/90 SESSION band pings and swaps them for one 95% heads-up. A
     togglable window setting, NOT a permanent probe change- returns minutes left, or
@@ -1337,7 +1337,7 @@ def _next_tier(current, tiers):
     return min(above) if above else 100.0
 
 def _breach_step_active(snap=None):
-    """Atul's STEPPED breach (the /breach command, 7th July spec). A .baxter_breach_step
+    """the owner's STEPPED breach (the /breach command, 7th July spec). A .baxter_breach_step
     marker holds a session-ceiling + weekly-ceiling = the NEXT tier rung above where usage
     sat when he set it. While the marker is live AND BOTH dimensions are still under their
     ceiling, big work runs one tier further than the normal band would allow; the instant
@@ -1380,7 +1380,7 @@ def soft_stopped(snap=None):
     `free = cap - live` comes out at zero and the lanes drain themselves empty.
 
     The same three authorisations that lift the 80% big stop lift this one. Without
-    that, `--override` inside the 60-80 band is a silent no-op: Atul says "go big" at
+    that, `--override` inside the 60-80 band is a silent no-op: the owner says "go big" at
     65%, the confirmation prints, and the pump still opens nothing."""
     if snap is None:
         snap = read_meters()
@@ -1413,7 +1413,7 @@ def blocked(kind="big"):
     # NO DRAIN RUNG HERE, AND THERE NEVER MAY BE ONE. The drain band lives in
     # soft_stopped(), read only by lane_capacity(). This function is the watchdog's kill
     # path: a worker reads it and self-aborts, and enforce() mints .baxter_stop off _band().
-    # A 60 rung here would therefore CUT the in-flight builds that Atul's order exists to
+    # A 60 rung here would therefore CUT the in-flight builds that the owner's order exists to
     # let finish ("upon completion of the current task. lane closes"). The drain stops the
     # pump OPENING a lane; it says nothing to a lane already running.
     k = (kind or "big").lower()
@@ -1426,7 +1426,7 @@ def blocked(kind="big"):
     # the 70% wall). The STOP_FLAG alone can't catch this: a false-LOW read leaves no
     # flag set. So before trusting the flag, refuse a big burn whenever the last GOOD
     # read has aged past BIG_FRESH. Same _big_meter_hold() the soft gate uses- one test,
-    # one stop path. Vital/fast lanes are cheap and stay alive (answering Atul is never
+    # one stop path. Vital/fast lanes are cheap and stay alive (answering the owner is never
     # gated). Only an explicit breach lifts this hold- a meter we can't refresh cannot
     # prove we're under a wall, so nothing weaker overrides it.
     if k == "big" and breach is None:
@@ -1461,7 +1461,7 @@ def blocked(kind="big"):
 
 # ---- BIG-TASK QUEUE (5th July, his 12:00 + 14:33 order) --------------------
 # One project-class task at a time, ever. Priorities: lower runs first.
-PRIO_URGENT = 1      # Atul said "do this first"
+PRIO_URGENT = 1      # the owner said "do this first"
 PRIO_RESUME = 2      # interrupted mid-flight- finish what's started before new work
 PRIO_DEFAULT = 5     # a normal queued build
 PRIO_BACKGROUND = 8  # nice-to-have / passive prep
@@ -1471,7 +1471,7 @@ PRIO_GATED = 9       # waiting on a human- BELOW background, so it never holds h
 # `priority` is DERIVED and disposable; `base_priority` is the anchor, written only by a
 # human decision or an explicit band assignment (enqueue -> N, halt -> 2, --edit -> N).
 # Every 15 min the governor beat re-scores the pending queue off the anchor: starved entries
-# age-promote, human-gated ones sink, Atul's p1 pins freeze. Auto-scoring never mints a p1
+# age-promote, human-gated ones sink, the owner's p1 pins freeze. Auto-scoring never mints a p1
 # and never touches `rank` or `queued_at`.
 REPRIO_EVERY = 900   # seconds between passes; --force ignores it
 REPRIO_AGE_CAP = 3   # an entry may age-promote at most 3 bands, however long it has waited
@@ -1625,7 +1625,7 @@ def queue_write(q):
                         continue                       # accounted: a real drop, or a live lane
                     q.append(dict(e))                  # heal- put the row back before we write
                     restored.append(e)
-                    record_reject(e, f"gated on {gate_of(e) or 'atul'}, dropped by a write with "
+                    record_reject(e, f"gated on {gate_of(e) or 'owner'}, dropped by a write with "
                                      f"no drop record- restored", kind="queue_loss")
                 if restored:
                     _log("queue-loss GUARD- restored {} gated entr{} a write would have dropped "
@@ -1643,7 +1643,7 @@ def _reprio_stamp():
 
     Derived, not fixed, for exactly the reason _queue_lock() and _dropped_store() are: the
     exam and the selftests swap TASK_QUEUE for a scratch file, and a hard-coded
-    VAULT/.baxter_reprio_stamp would have every test read Atul's live stamp (so a real pass
+    VAULT/.baxter_reprio_stamp would have every test read the owner's live stamp (so a real pass
     silently no-ops mid-test) and every forced run clobber it."""
     try:
         return Path(str(TASK_QUEUE)).with_name(".baxter_reprio_stamp")
@@ -1655,11 +1655,11 @@ def reprio_score(entry, now):
     """The derived priority for one entry. PURE- no I/O, no clock read; `now` is passed in
     so a whole pass scores against one instant and the exam can pin it.
 
-    - base 1 -> 1. Atul's pin is frozen: it neither ages nor sinks.
+    - base 1 -> 1. the owner's pin is frozen: it neither ages nor sinks.
     - human-gated -> 9 (PRIO_GATED), below PRIO_BACKGROUND, so a task waiting on him can
       never sit at head-of-line and starve the runnable queue behind it.
     - otherwise max(2, base - min(3, age_days)). The floor of 2 is load-bearing: auto-scoring
-      must NEVER mint a p1, which means "Atul said do this first" and nothing else.
+      must NEVER mint a p1, which means "the owner said do this first" and nothing else.
 
     The gate is read through gate_of(), never off the raw field: one live entry carries
     `gated_on: null` rather than "", and a raw read scores it as gated."""
@@ -1720,7 +1720,7 @@ def queue_reprioritize(now=None, force=False):
     return changed, total
 
 
-# ---- WHERE IT ACTUALLY SITS (Atul, 9th July 09:38) ---------------------------------
+# ---- WHERE IT ACTUALLY SITS (the owner, 9th July 09:38) ---------------------------------
 # "Every queued confirmation must state the exact position." Not a formatting preference:
 # a position can only be printed by a process that has WRITTEN the entry and then read the
 # order back, so demanding the number is what makes the confirmation impossible to fake.
@@ -1745,7 +1745,7 @@ def _benched_store():
 
     Derived, not fixed, for the same reason _dropped_store() and _reprio_stamp() are: the
     exam and the selftests swap TASK_QUEUE for a scratch file, and a hard-coded
-    VAULT/'.baxter_task_queue_benched.json' would count ATUL'S real benched pile into a
+    VAULT/'.baxter_task_queue_benched.json' would count OWNER'S real benched pile into a
     fixture's totals- a number that looks right and means nothing.
     """
     try:
@@ -1780,7 +1780,7 @@ def _lane_state():
 
     That path is why this degrades to (0, set()) rather than propagating: the confirmation
     is printed AFTER the queue write has already succeeded. A journal caught mid-write must
-    cost Atul a "(0 running)" he can ignore, never the position line for a task that is
+    cost the owner a "(0 running)" he can ignore, never the position line for a task that is
     genuinely on the queue.
     """
     try:
@@ -1793,7 +1793,7 @@ def _lane_state():
 def queue_totals():
     """{'pending', 'running', 'benched'}- three ints, always, whatever is broken.
 
-    `pending` is REMAINING WORK, not a lifetime total. Atul, 9th July: "i have never seen
+    `pending` is REMAINING WORK, not a lifetime total. the owner, 9th July: "i have never seen
     this build position total number EVER go down." He was right on both counts. The figure
     is only ever printed at the instant of an ARRIVAL, so every number he has ever been
     shown is a local peak, and every drain between two of his messages happened where he
@@ -1968,7 +1968,7 @@ class DuplicateTask(Exception):
 
 
 class MissingPRD(Exception):
-    """A big task filed with no document behind it (Atul, 9th July: "a rigorous prd before it
+    """A big task filed with no document behind it (the owner, 9th July: "a rigorous prd before it
     gets filed"). Carries the note it was given, because a refusal that will not say WHY the
     path it was handed is not a PRD cannot be acted on.
 
@@ -1983,7 +1983,7 @@ class MissingPRD(Exception):
                          else "no PRD: the task was filed as a bare string")
 
 
-# ---- A REFUSED ASK GOES BACK TO THE PM, NOT INTO A BIN (Atul, 10th July) ----
+# ---- A REFUSED ASK GOES BACK TO THE PM, NOT INTO A BIN (the owner, 10th July) ----
 # "I don't want a PRD ever parked. I want it to be sent back to the PM every single time with
 #  feedback on how to improve it. This should cause a loop until the PRD is always sufficiently
 #  built. Always success."
@@ -2001,7 +2001,7 @@ class MissingPRD(Exception):
 # re-spawns a PM for any ask still waiting on one.
 #
 # It is BOUNDED, and it has to be. An unbounded retry against a manager that keeps saying
-# `reject` is an unbounded spend of Atul's usage on a build his own reviewer says should not
+# `reject` is an unbounded spend of the owner's usage on a build his own reviewer says should not
 # exist. After PRD_MAX_ROUNDS the ask stays queued, stays visible, and he is told- which is the
 # one outcome that is neither silent loss nor runaway cost.
 PRD_GATE = "pm"          # gated_on value while the PM drafts. Not a GATE_NONE- the pump can't run it
@@ -2056,9 +2056,9 @@ def prd_sweep():
         if released:
             queue_write(q)
     # PAUSED BY FILE, not only by env var. The watcher and its triage children are long-lived
-    # processes started from a shell whose environment Atul cannot reach afterwards, so an env
+    # processes started from a shell whose environment the owner cannot reach afterwards, so an env
     # var can only pause a sweep at the NEXT relaunch. A flag in the vault pauses it this beat.
-    # (Atul, 10th July: "I will come back to you later about the PM sweep when my usage resets.")
+    # (the owner, 10th July: "I will come back to you later about the PM sweep when my usage resets.")
     if not waiting or os.environ.get("BAXTER_NO_PM_SWEEP") or (VAULT / ".baxter_no_pm_sweep").exists():
         return released, spawned
 
@@ -2066,7 +2066,7 @@ def prd_sweep():
     # all, and a PM is not something the governor can clean up after: the watcher's kill matches
     # `claude.exe` whose command line carries 'big-task' or 'BAXTER_TRIAGE', and a PM's Opus
     # carries neither. So an unbanded sweep would have spawned PRD after PRD straight THROUGH the
-    # 80% big stop and the 90% vital-only wall, with nothing able to stop it but Atul noticing.
+    # 80% big stop and the 90% vital-only wall, with nothing able to stop it but the owner noticing.
     #
     # Spawning stops at the DRAIN (60%), not at the big stop: a PM round-trip is ~8 minutes of
     # two Opus instances, so starting one at 79% commits spend that lands well past 80. The drain
@@ -2083,7 +2083,7 @@ def prd_sweep():
     if _pm_running():
         return released, spawned
     # Fewest rounds, then PRIORITY, then age. Priority leads age on purpose: a PM round-trip is
-    # ~8 minutes of two Opus, and at that rate a window drafts only a handful- so a p2 ask Atul
+    # ~8 minutes of two Opus, and at that rate a window drafts only a handful- so a p2 ask the owner
     # is waiting on must not sit behind a dozen p9 background tickets that merely arrived earlier.
     # prd_rounds still leads everything, so a hard-to-spec ask cycles to the back rather than
     # monopolising the PM every beat.
@@ -2187,7 +2187,7 @@ def enqueue(task, next_step, note="", state_summary="", priority=PRIO_DEFAULT, t
     hub file) be refused re-entry and vanish from the queue on its way through a halt, which
     is a lost build to fix a cosmetic declaration. Re-queued work fails safe by serialising.
 
-    `source_mid`- the Discord message id the task came from (Atul, 9th July)- is a stronger
+    `source_mid`- the Discord message id the task came from (the owner, 9th July)- is a stronger
     identity than the task text, and is matched FIRST. The fast lane writes a placeholder
     carrying his raw sentence the moment he asks; triage later refines the prose. Keyed on
     the text alone that refinement forks a duplicate beside the placeholder. Keyed on the
@@ -2195,7 +2195,7 @@ def enqueue(task, next_step, note="", state_summary="", priority=PRIO_DEFAULT, t
 
     `source_channel`- the channel that message arrived in (10th July). A task remembers WHERE
     it was asked, so the lane that finishes it answers THERE. Without it a finished build
-    replied through baxter_say's `general` default whatever channel Atul used, and on 9th July
+    replied through baxter_say's `general` default whatever channel the owner used, and on 9th July
     the shred answer he asked for in #deadlock-research landed in #general. PRESERVED across a
     halt+re-queue exactly like the touch-set: passing nothing keeps the channel already known,
     so a halting build never forfeits the room it must answer in.
@@ -2206,7 +2206,7 @@ def enqueue(task, next_step, note="", state_summary="", priority=PRIO_DEFAULT, t
     will edit) is what lets the delegator co-schedule it on a second lane- an
     entry without one runs solo. On update an existing touch_set is PRESERVED
     unless a new one is given, so a halt+re-queue never silently forfeits its lane.
-    `gated_on="atul"` parks it until he says go; pass "" to lift the gate. On update
+    `gated_on="owner"` parks it until he says go; pass "" to lift the gate. On update
     an existing gate is PRESERVED unless gated_on is given explicitly- a halt must
     never quietly un-gate the task it is re-queueing.
 
@@ -2223,7 +2223,7 @@ def enqueue(task, next_step, note="", state_summary="", priority=PRIO_DEFAULT, t
     resume band. Deliberate demotion is `queue_edit(..., priority=N)`, which sets it flat."""
     # BEFORE the lock, and before any write: a refusal must cost the queue nothing.
     #
-    # THE PRD GATE (Atul, 9th July 09:47). `prd_required` is OFF by default, and that is
+    # THE PRD GATE (the owner, 9th July 09:47). `prd_required` is OFF by default, and that is
     # structural rather than timid- exactly as `dedup` is. halt(), baxter_triage._park,
     # baxter_fast's placeholder and baxter_autobuild.notice() each re-state work whose
     # document, if it ever had one, was written once already; a gate there would strand a
@@ -2407,7 +2407,7 @@ def halt(task, next_step, note="", state_summary="", touch_set=None,
     # THE HUMAN GATE RIDES ALONG TOO (10th July). enqueue() reaches its FRESH branch from
     # here- the pump POPPED the entry when it handed it to a lane- and a fresh entry stamps
     # `gated_on: ""` from enqueue's default. A build that was gated (an empty placeholder
-    # gated on `pm` mid-PRD, or an entry gated on `atul`) would come back UNGATED, and the
+    # gated on `pm` mid-PRD, or an entry gated on `owner`) would come back UNGATED, and the
     # pump would grab it: two lanes have scoped one empty ask this way. Recover the gate off
     # the same live journal on the same terms as the exam and the id- id first, EXACT task
     # text second, an ambiguous OR absent match carries NOTHING (a neighbour's gate is never
@@ -2484,7 +2484,7 @@ def halt(task, next_step, note="", state_summary="", touch_set=None,
     return e
 
 
-# ---- THE EDIT SURFACE (Atul, 9th July 09:21: "is editing things in build queue hard?") ----
+# ---- THE EDIT SURFACE (the owner, 9th July 09:21: "is editing things in build queue hard?") ----
 # It was, structurally. The queue had three verbs- add, promote, ungate- and no way to
 # reword an entry, push one DOWN the order, or remove one. Rewording meant re-running
 # --queue with new text, and enqueue() keys on the task string, so a one-character change
@@ -2616,12 +2616,12 @@ def queue_edit(needle, force=False, *, verify_by=None, vet=True, **fields):
     A `touch_set` given here is vetted exactly as `enqueue()` vets one, and for the same
     reason: this is the OTHER function that writes the field, so a guard on only one of them
     is a guard on neither. It RAISES `BadTouchSet` rather than returning `(False, msg, [])`-
-    the refusal has to be as loud for a library caller as `--edit` makes it for Atul, and a
+    the refusal has to be as loud for a library caller as `--edit` makes it for the owner, and a
     (False, ...) tuple is exactly the return value a caller forgets to read.
 
     Priority moves BOTH ways here (a flat set, not enqueue's promote-only `min`)- that is
     the whole point of the verb. Two edits are refused: one to a task that is live in a
-    lane, and a priority change to a p1 entry, which is Atul's own "do this first" pin and
+    lane, and a priority change to a p1 entry, which is the owner's own "do this first" pin and
     must not be quietly undone by a passing worker. `force=True` lifts the p1 refusal.
 
     `verify_by` is the caller's CLAIMED provenance, not an editable field- hence keyword-only
@@ -2648,7 +2648,7 @@ def queue_edit(needle, force=False, *, verify_by=None, vet=True, **fields):
                            f"changes nothing about the running build and is lost when it halts "
                            f"and re-queues. Let it land, or halt the lane first."), []
         if "priority" in given and int(e.get("priority", PRIO_DEFAULT)) == PRIO_URGENT and not force:
-            return False, (f"refused: [{e.get('id')}] is pinned at priority 1- Atul's own "
+            return False, (f"refused: [{e.get('id')}] is pinned at priority 1- the owner's own "
                            f"'do this first'. Re-prioritising it needs --force."), []
         changes = []
         for k, v in given.items():
@@ -2697,7 +2697,7 @@ def queue_edit(needle, force=False, *, verify_by=None, vet=True, **fields):
                 changes.append(("acceptance_sealed", was_sealed, e.get("acceptance_sealed")))
         if any(k == "priority" for k, _b, _a in changes):
             # A `rank` is a slot within ONE band. Carried into a new band it would jump the
-            # entry ahead of every unranked task there, on the strength of a placement Atul
+            # entry ahead of every unranked task there, on the strength of a placement the owner
             # made somewhere else. Re-prioritising re-enters it at the back, FIFO by queued_at.
             e.pop("rank", None)
             # Re-anchor. This edit is a DELIBERATE priority write- his, not the scorer's- and
@@ -2716,7 +2716,7 @@ def _dropped_store():
 
     Derived, not fixed, for the same reason _queue_lock() is: the selftests swap TASK_QUEUE
     for a scratch file, and a hard-coded VAULT path would have them append fixtures to- and
-    recover fixtures from- Atul's real store.
+    recover fixtures from- the owner's real store.
     """
     try:
         p = Path(str(TASK_QUEUE))
@@ -2820,7 +2820,7 @@ MOVE_WORDS = ("up", "down", "top", "bottom")
 def _band_of(q, e):
     """The entries sharing e's priority, in run order, and e's index among them. Identity, not
     equality: two queue entries can compare equal as dicts, and `.index()` would find the wrong
-    one and move a task Atul never picked."""
+    one and move a task the owner never picked."""
     band = [x for x in q if _prio_int(x) == _prio_int(e)]
     return band, next(i for i, x in enumerate(band) if x is e)
 
@@ -2855,7 +2855,7 @@ def queue_move(needle, where, force=False):
     reflowed the band reads as 'refused' while the run order has silently shifted:
       1. LIVE IN A LANE. Reordering a queue entry under a running build changes nothing about
          that build and is lost the moment it halts and re-queues. Never forceable.
-      2. A p1 PIN- Atul's own "do this first". `force=True` lifts it, as it does for --edit.
+      2. A p1 PIN- the owner's own "do this first". `force=True` lifts it, as it does for --edit.
       3. HUMAN-GATED. It cannot run until he says go, so its slot means nothing. force lifts it.
     """
     with queue_txn():
@@ -2872,7 +2872,7 @@ def queue_move(needle, where, force=False):
                            f"does nothing to the running build and is lost when it halts and "
                            f"re-queues. Let it land, or halt the lane first.")
         if _prio_int(e) == PRIO_URGENT and not force:
-            return False, (f"refused: [{e.get('id')}] is pinned at priority 1- Atul's own "
+            return False, (f"refused: [{e.get('id')}] is pinned at priority 1- the owner's own "
                            f"'do this first'. Moving it within that band needs --force.")
         if is_human_gated(e) and not force:
             return False, (f"refused: [{e.get('id')}] is gated on {gate_of(e)}- it cannot run "
@@ -2951,7 +2951,7 @@ HEADROOM_2ND = 0.0    # extra headroom the 2ND lane needs beyond the plain big-s
                       # flat 80% ceiling it opened lane 2 only below 65% session usage,
                       # and builds actually run at 68-79%. The band where two lanes were
                       # permitted barely overlapped the band where builds happen, so lane
-                      # 2 never once opened (Atul, 9th July 00:08). The "two builds burn
+                      # 2 never once opened (the owner, 9th July 00:08). The "two builds burn
                       # ~2x, don't sprint into the wall" fear was miscosted: the wall is a
                       # SOFT pause- a lane that hits it halts and re-queues at priority 2
                       # through the existing machinery, losing a spawn. Serialising every
@@ -3035,7 +3035,7 @@ def touch_keys(p):
 #
 #   `--solo`   Someone READ the task and decided it rewrites too much to declare. It must
 #              take the whole board. Over-locking is the correct answer.
-#   unscoped   The fast lane wrote a placeholder the instant Atul typed a sentence. NOBODY has
+#   unscoped   The fast lane wrote a placeholder the instant the owner typed a sentence. NOBODY has
 #              read it. Its own next_step says "scope it, declare a real touch-set, then build".
 #
 # Both got the strictest lock there is, so the second kind could only run on a completely empty
@@ -3050,7 +3050,7 @@ def touch_keys(p):
 # re-clashes it mid-build- the loosening is bounded by the same mechanism that catches drift.
 SOLO_LOCK = "\x00solo"        # NUL: no CLI, JSON hand-edit or prompt can spell it by accident
 UNSCOPED_TAG = "@unscoped"    # legacy- retained so an old journal still parses; superseded below
-# THE CHECKER FLOWS FREELY (Atul, 10th July: "every task that the only task is to 'check what
+# THE CHECKER FLOWS FREELY (the owner, 10th July: "every task that the only task is to 'check what
 # this task actually entails' does no coding itself... they SHOULD have an explicitly
 # inconsequential touchset so they have 0 barriers to entry"). A task that has not been scoped
 # yet does exactly one thing first: it READS the code to work out what it will touch. A read
@@ -3068,7 +3068,7 @@ READONLY_TAG = "@readonly"    # a scope-only pass: reads to find its touch-set, 
 
 def autoscope(task, next_step=""):
     """Read a touch-set straight out of a task that NAMES its files- no lane, no model, no
-    black-box checker (Atul, 10th July: "surely you can just tell, and auto scope every task...
+    black-box checker (the owner, 10th July: "surely you can just tell, and auto scope every task...
     this isnt currently editing anything, just scrubbing through and figuring out which code
     bases this task touches"). The code that FILES a task like 'Sealed exam baxter_touchvet_
     exam.py is RED' already holds the filename; queueing it unscoped threw that away and made it
@@ -3141,9 +3141,9 @@ def touch_of(entry):
 
 
 # ---- HUMAN GATE (9th July) ----
-# A task waiting on Atul's explicit 'go' (an outward/destructive act, or a question
+# A task waiting on the owner's explicit 'go' (an outward/destructive act, or a question
 # only he can answer) must never be pumped into a lane. That state is now an EXPLICIT
-# FIELD set at queue time- `gated_on: "atul"`- and nothing else.
+# FIELD set at queue time- `gated_on: "owner"`- and nothing else.
 # It used to be inferred by substring-matching gating words in the task's PROSE, which
 # disabled any task whose DESCRIPTION merely mentioned being blocked: the p1 pump fix
 # had to be reworded to avoid gating itself, and the browser-meter entry (genuinely
@@ -3378,7 +3378,7 @@ def selftest_statusline():
 
 def selftest_pings():
     """Prove a quiet window mutes the PERCENTAGE and never the STATE, and that a hole between
-    clean reads announces itself (9th July; Atul 07:08: "I know we hit 80% usage. But you never
+    clean reads announces itself (9th July; the owner 07:08: "I know we hit 80% usage. But you never
     pinged that over"). Drives _pings() directly and asserts on what reached the outward path,
     never on the source text. _say, _log and both breach/override probes are stubbed, and
     QUIET95 is redirected to a scratch file- nothing here touches the network, the real markers,
@@ -3472,14 +3472,14 @@ def selftest_declare():
 
     Drives main() exactly as a caller does, against a scratch queue file, and stubs the
     meter so nothing touches the network. Every outward path stays stubbed- a selftest that
-    reaches _say once posted a false usage reset to Atul ([[selftests-stub-every-outward-path]])."""
+    reaches _say once posted a false usage reset to the owner ([[selftests-stub-every-outward-path]])."""
     global TASK_QUEUE, REJECT_LOG
     import tempfile
     real_queue, real_log, real_rej = TASK_QUEUE, globals()["_log"], REJECT_LOG
     tmp = Path(tempfile.mkdtemp(prefix="baxter_declare_")) / "queue.json"
     TASK_QUEUE, globals()["_log"] = tmp, lambda *a, **k: None
     # Every accepted --queue below carries --prd-exempt, and every bypass is LOGGED. Without
-    # this redirect a selftest run would write 'prd_exempt' rows into the guard log Atul reads.
+    # this redirect a selftest run would write 'prd_exempt' rows into the guard log the owner reads.
     REJECT_LOG = tmp.parent / "exempt.jsonl"
     try:
         # 1. The bug, exactly as it was: no touch-set, no --solo. It must be REFUSED.
@@ -3513,8 +3513,8 @@ def selftest_declare():
         # 3b. THE TWO KINDS OF EMPTY (10th July). `--solo` and 'nobody has scoped this yet' both
         # carry touch_set: [] but need OPPOSITE locks. --solo takes the whole board. An unscoped
         # entry is a READ-ONLY scoping pass (the writer hook enforces it), so it clashes with
-        # NOTHING and flows onto any lane in parallel- Atul, 10th July: "0 barriers to entry".
-        placeholder = {"task": "raw sentence from Atul", "touch_set": []}          # no solo key
+        # NOTHING and flows onto any lane in parallel- the owner, 10th July: "0 barriers to entry".
+        placeholder = {"task": "raw sentence from the owner", "touch_set": []}          # no solo key
         declared = {"task": "a real build", "touch_set": ["utils/baxter_deals.py"]}
         assert touch_of(e) == {SOLO_LOCK}, touch_of(e)
         assert touch_of(placeholder) == {READONLY_TAG}, touch_of(placeholder)
@@ -3627,7 +3627,7 @@ def selftest_declare():
         #    the same id and better prose UPGRADES the placeholder rather than forking a twin
         #    beside it. Before the flag existed, enqueue()'s message-id dedup was reachable
         #    only by importing the module: every CLI caller queueing for a message that had
-        #    already been given a placeholder doubled it, and Atul was told a position that
+        #    already been given a placeholder doubled it, and the owner was told a position that
         #    described the wrong row.
         assert main(["--queue", "ask one", "step", "--solo", "--source-mid", "777",
                      "--prd-exempt"]) == 0
@@ -3647,7 +3647,7 @@ def selftest_declare():
         e = next(x for x in queue_read() if x.get("source_mid") == "778")
         assert e["task"] == "keyed build, refined" and e["touch_set"] == ["utils/a.py"], e
 
-        # 7b. THE PRD GATE (Atul, 9th July). A declared, non-duplicate, perfectly-formed big
+        # 7b. THE PRD GATE (the owner, 9th July). A declared, non-duplicate, perfectly-formed big
         #     task is STILL refused when no document stands behind it- and the refusal, like
         #     every other, lands in the guard's own log. --prd-exempt is the one way past, and
         #     it is logged too: everything above this line used it, and said so.
@@ -3664,7 +3664,7 @@ def selftest_declare():
 
         # 7c. REFUSE THE BUILD, NEVER LOSE THE ASK (10th July). This case used to assert the
         #     OPPOSITE- "a PRD-less refusal must not reach the queue"- and that assertion is
-        #     why fourteen of Atul's asks ceased to exist on 10th July, among them the Codex
+        #     why fourteen of the owner's asks ceased to exist on 10th July, among them the Codex
         #     doctor pfp and the drag-and-drop queue UI he had asked for five times. Refusing
         #     to BUILD something is a guard doing its job. Refusing to REMEMBER it is data loss.
         parked = next((x for x in queue_read() if x["task"] == "an undocumented build"), None)
@@ -3677,7 +3677,7 @@ def selftest_declare():
         # ...and the pump must genuinely refuse it, not merely be expected to.
         assert is_human_gated(parked), "a gated entry is never runnable"
 
-        # 7d. THE ASK GOES BACK TO THE PM, AND THE GATE LIFTS ITSELF (Atul, 10th July: "I don't
+        # 7d. THE ASK GOES BACK TO THE PM, AND THE GATE LIFTS ITSELF (the owner, 10th July: "I don't
         #     want a PRD ever parked. I want it sent back to the PM every single time with
         #     feedback... a loop until the PRD is sufficiently built"). No PRD -> still gated.
         #     A real PRD in 60-PRDs/ -> prd_sweep() releases it on the very next governor beat,
@@ -3709,7 +3709,7 @@ def selftest_declare():
         try:
             record_reject({"task": "held task", "priority": 3}, "both touch utils/x.py",
                           lane=0, kind="clash")
-            record_reject("gated task", "gated on atul", kind="gated_on")
+            record_reject("gated task", "gated on owner", kind="gated_on")
             rows = read_rejects(10)
             assert len(rows) == 2 and rows[0]["kind"] == "gated_on", rows
             assert rows[1]["lane"] == 1, "a lane is logged as 1..N, never 0"
@@ -3738,7 +3738,7 @@ def selftest_dup():
     """Prove `--queue` cannot schedule a reworded restatement of a pending or in-flight task,
     and- just as hard- that it still schedules everything else.
 
-    Driven through main() rather than enqueue(), because the refusal Atul sees is an EXIT
+    Driven through main() rather than enqueue(), because the refusal the owner sees is an EXIT
     CODE and only main() produces one. Calling enqueue() directly would prove the helper works
     while the CLI still queued the duplicate ([[exam-must-drive-the-gate]]).
 
@@ -3798,7 +3798,7 @@ def selftest_dup():
         assert "near-duplicate" in out.lower(), out
         assert depth() == 1, f"a refused duplicate reached the queue: {depth()}"
 
-        # 3. ...and the guard keeps its own log (Atul, 9th July 08:46).
+        # 3. ...and the guard keeps its own log (the owner, 9th July 08:46).
         rows = read_rejects(5)
         assert rows and rows[0]["kind"] == "duplicate", rows
         assert first_id in rows[0]["reason"], rows[0]
@@ -3818,7 +3818,7 @@ def selftest_dup():
         assert depth() == 3, f"the update path forked an entry: {depth()}"
         assert next(e for e in queue_read() if e["id"] == first_id)["priority"] == 1
 
-        # 6. THE REFINEMENT FORK. The fast lane writes a placeholder from Atul's raw sentence;
+        # 6. THE REFINEMENT FORK. The fast lane writes a placeholder from the owner's raw sentence;
         #    triage rewords it later under the same message id. Keyed on that id it is an
         #    UPGRADE. Were the dedup check to run ABOVE the source_mid match, the refinement
         #    would be refused for resembling the very row it refines, and his ask would vanish.
@@ -3892,7 +3892,7 @@ def selftest_dup():
 
 
 def selftest_edit():
-    """Prove the queue can actually be EDITED (Atul, 9th July 09:21), and that the four
+    """Prove the queue can actually be EDITED (the owner, 9th July 09:21), and that the four
     faults behind "editing build PRDs is hard" are each closed:
       1. the verbs exist- --edit, --retext, --drop
       2. an entry is addressed by a stable id or an unambiguous substring, never exact prose
@@ -3947,7 +3947,7 @@ def selftest_edit():
         assert main(["--edit", "(v3)", "--priority", "6"]) == 0, "an unambiguous substring works"
         assert main(["--edit", "no such task anywhere", "--priority", "6"]) == 1
 
-        # 4. ATUL'S p1 PIN is not something a passing worker may quietly undo.
+        # 4. OWNER'S p1 PIN is not something a passing worker may quietly undo.
         assert main(["--edit", first["id"], "--priority", "1"]) == 0
         assert main(["--edit", first["id"], "--priority", "8"]) == 1, "a p1 pin needs --force"
         assert _one(first["id"])["priority"] == 1
@@ -4168,7 +4168,7 @@ def selftest_drop():
 
 
 def selftest_move():
-    """Prove the queue can be REORDERED within a band (Atul, 9th July 09:29- the "cozy drag
+    """Prove the queue can be REORDERED within a band (the owner, 9th July 09:29- the "cozy drag
     and drop" ask), and that a move can never do the one thing worse than not moving:
 
       1. the CLI reorders within a band- up, down, top, bottom, and an exact slot
@@ -4252,7 +4252,7 @@ def selftest_move():
         assert _order() == snap, "a refused move must not reorder"
         globals()["_live_lane_of"] = lambda e: None
 
-        # 4b. FREEZE: ATUL'S p1 PIN. --force lifts it, exactly as it does for --edit/--drop.
+        # 4b. FREEZE: OWNER'S p1 PIN. --force lifts it, exactly as it does for --edit/--drop.
         assert _m("--edit", "delta", "--priority", "1")[0] == 0
         _q("echo", 1)                       # a second p1, so 'down' is even expressible
         assert _order()[:2] == ["delta", "echo"], _order()
@@ -4264,10 +4264,10 @@ def selftest_move():
         assert _order()[:2] == ["echo", "delta"], _order()
 
         # 4c. FREEZE: HUMAN-GATED. Its slot decides nothing until he says go.
-        _q("foxtrot", 5, gate="atul")
+        _q("foxtrot", 5, gate="owner")
         snap = _order()
         rc, out = _m("--move", "foxtrot", "top")
-        assert rc == 1 and "gated on atul" in out, f"a gated entry must refuse a move: {out}"
+        assert rc == 1 and "gated on owner" in out, f"a gated entry must refuse a move: {out}"
         assert _order() == snap, "a refused move must not reorder"
         assert _m("--move", "foxtrot", "top", "--force")[0] == 0, "--force lifts the gate refusal"
 
@@ -4351,7 +4351,7 @@ def _lane_id(rf):
 
 
 def lane_label(lane):
-    """Human lane number: lanes read as 1..LANE_COUNT, never lane 0 (Atul, 9th July).
+    """Human lane number: lanes read as 1..LANE_COUNT, never lane 0 (the owner, 9th July).
     Internals stay zero-indexed- journal filenames, next_lane_id and the delegator are
     untouched- so EVERY surface he reads must render through this. A non-numeric lane
     ('?') passes through as-is rather than inventing a number."""
@@ -4370,7 +4370,7 @@ def _lane_started(rf, entry):
 # process check, no age check. The two-lane build died at 01:37 and `--lanes` went on
 # printing "1/1 live" against a journal whose mtime had frozen at the moment of death.
 # The 30-minute orphan sweep in baxter_triage does clear such a corpse, but half an hour
-# is forever during the unattended drain Atul asked for: EVERY failure stalls a lane while
+# is forever during the unattended drain the owner asked for: EVERY failure stalls a lane while
 # every readout claims it is working. A verify gate on a lane nobody knows is dead never
 # runs, so this is the leg that makes the other three matter overnight.
 #
@@ -4422,7 +4422,7 @@ def lane_alive(rf, entry):
 
 def lane_journals(alive_only=True):
     """Every LIVE lane: [(journal_path, entry_or_None)]. A `.failed.json` (shelved) or
-    `.parked.json` (troubleshot to a standstill, awaiting Atul) journal is a corpse, not
+    `.parked.json` (troubleshot to a standstill, awaiting the owner) journal is a corpse, not
     a lane, and neither is one whose worker stopped heartbeating. An UNREADABLE journal
     (caught mid-write) still counts as a lane with entry=None: it occupies a slot and,
     having no readable touch-set, blocks a second lane from opening- the safe direction.
@@ -4721,7 +4721,7 @@ def lanes_report():
     """What `--lanes` must show: (fleet, WORKER_BUDGET, [(journal, entry, honoured_subs)]).
 
     Pure- no printing, no meters, no network- so a test can drive it and main() cannot
-    smuggle a side effect into the readout. Atul reads lane COUNT everywhere and fleet
+    smuggle a side effect into the readout. the owner reads lane COUNT everywhere and fleet
     WIDTH nowhere, which is how ten lanes fanning out three-wide could quietly spend
     forty Opus spawns against a budget of thirteen. The fleet number is fleet_workers()
     itself, never len(lanes) and never LANE_COUNT: on a FULL board with no lead fanned
@@ -4774,7 +4774,7 @@ def selftest_lanes():
             rc = main(["--lanes"])
         out = buf.getvalue()
         assert rc == 0, out
-        # Lanes read 1..10 to Atul; the zero-indexed journal names stay internal.
+        # Lanes read 1..10 to the owner; the zero-indexed journal names stay internal.
         assert "[lane 1]" in out and "[lane 2]" in out and "[lane 3]" in out, out
         assert "[lane 0]" not in out, "a lane must never print as lane 0"
         assert f"6/{WORKER_BUDGET}" in out.replace(" ", ""), out
@@ -5206,7 +5206,7 @@ def _owns_region_of(path, lane_touch):
 def writer_touch(paths, pid=None):
     """WRITER SELF-CHECK, no journal required. Returns (ok, message, owner_journal).
 
-    ok=False means a LIVE lane owns one of `paths`: do not edit it, tell Atul, queue the work.
+    ok=False means a LIVE lane owns one of `paths`: do not edit it, tell the owner, queue the work.
     The owning lane- the one whose pid is an ancestor of this process- is excluded, and any
     path IT declared is skipped outright, because the delegator already proved that lane
     clash-free against every other live lane before it was ever started."""
@@ -5242,7 +5242,7 @@ def writer_touch(paths, pid=None):
                 return (False,
                         f"refused: a live lane owns {p}- {Path(rf).name} ({why})\n"
                         f"  that lane: {str(e.get('task', '?'))[:70]}\n"
-                        f"  do NOT edit it. Tell Atul the lane owns it, and queue the work.",
+                        f"  do NOT edit it. Tell the owner the lane owns it, and queue the work.",
                         str(rf))
     return (True, f"clear- no live lane owns {', '.join(want)}", None)
 
@@ -5257,7 +5257,7 @@ def _writer_touch_hook(raw=None):
     """The PreToolUse form. JSON payload on stdin, verdict on stdout, exit code always 0.
 
     SILENCE IS ALLOW. Printing permissionDecision "allow" would auto-approve the tool call and
-    skip Atul's own permission prompt for every edit in every session, so the clear path prints
+    skip the owner's own permission prompt for every edit in every session, so the clear path prints
     NOTHING and lets the normal flow proceed. Only a deny is ever written.
 
     Every exception is swallowed. This fires on each Edit in each session; a crash or a raised
@@ -5284,7 +5284,7 @@ def _writer_touch_hook(raw=None):
                     "build of this task WOULD touch, then re-queue it as a real build and stop- do "
                     "NOT edit source now. Run: python baxter_usage.py --halt \"<task>\" \"<next "
                     "step>\" --touch \"file_a,file_b/region\" (or --solo if it rewrites a hub). If "
-                    "the task needs a design rather than a file-list, say so to Atul instead."),
+                    "the task needs a design rather than a file-list, say so to the owner instead."),
             }}))
             return 0
         ok, msg, _owner = writer_touch(paths)
@@ -5341,7 +5341,7 @@ def lane_touch_release(journal, paths):
 
 
 def _band_face(pct, wkgate, ceil):
-    """The tier emoji + short phrase for the current band (Atul's 6th-July v2 /usage
+    """The tier emoji + short phrase for the current band (the owner's 6th-July v2 /usage
     spec- the command auto-attaches the phrase + emoji baked for that usage band).
     📊 clear · ⚠️ nearing the big-stop · 🛑 at the wall."""
     if pct >= ROUTINE_STOP_SESSION or wkgate >= ROUTINE_STOP_WEEKLY:
@@ -5352,7 +5352,7 @@ def _band_face(pct, wkgate, ceil):
 
 
 def report_line(snap):
-    """The /usage on-demand line (Atul's COMMAND, 5th July)- the basic info in the
+    """The /usage on-demand line (the owner's COMMAND, 5th July)- the basic info in the
     LOCKED one-line alert format. Pure formatting; the caller refreshes the meter.
     Session % + reset clock + weekly %, with the band's emoji + action phrase."""
     pct = float(snap.get("session_pct") or 0)
@@ -5370,7 +5370,7 @@ def report_line(snap):
 
 
 def write_live(snap):
-    """Bake the /usage reply line into .baxter_usage_live.json (Atul's 6th-July v2
+    """Bake the /usage reply line into .baxter_usage_live.json (the owner's 6th-July v2
     spec)- so the orthogonal /usage command is a pure file-read + Discord POST with
     ZERO meter compute on the hot path. Written on every successful probe; a failed
     probe leaves the last-known baked line untouched (never a blank/errored reply)."""
@@ -5700,7 +5700,7 @@ def vet_touch(touch):
     return warn
 
 
-# ---- THE GUARD'S OWN LOG (Atul, 9th July 08:46) ----
+# ---- THE GUARD'S OWN LOG (the owner, 9th July 08:46) ----
 # "it is very important that security guard periodically rejects things. thats how we know
 # it is functional." He asked for the rejection history and was told there was none. There
 # were 48, all that day- they were simply buried among everything else in .baxter.log, with
@@ -5768,7 +5768,7 @@ def _solo_arg(argv):
     """`--solo` -> the caller has looked at the task and cannot scope it, so it may queue
     with no touch-set and run alone. The ONLY way to create an undeclared entry.
 
-    Why it exists (Atul, 9th July 10:06- "this is a problem with the builds not declaring
+    Why it exists (the owner, 9th July 10:06- "this is a problem with the builds not declaring
     touch set when they should have. I need YOU to fix this"): every queue entry used to
     default to undeclared, and `--queue` merely PRINTED "no --touch declared, so it runs
     SOLO" after the fact. Nothing read that line, so 26 of 27 queued builds carried no
@@ -5779,9 +5779,9 @@ def _solo_arg(argv):
 
 
 def _gate_arg(argv):
-    """`--gate atul` -> "atul"; `--gate none` -> "" (lifts it); absent -> None (leave as-is).
+    """`--gate owner` -> "owner"; `--gate none` -> "" (lifts it); absent -> None (leave as-is).
 
-    A gate is ONE token- the party a task waits on ('atul', 'pm', 'prd') or nothing. On 10th
+    A gate is ONE token- the party a task waits on ('owner', 'pm', 'prd') or nothing. On 10th
     July baxter_pm_delegate handed --gate a whole justifying SENTENCE ('none - the build writes
     only code...'); the old code lower-cased it, found 'none - the build...' was not literally
     'none', and stored the paragraph as the gate. is_human_gated then read it as a real gate,
@@ -5834,7 +5834,7 @@ def main(argv):
         print("override cleared- 80% big stop back in force")
         return 0
     if "--breach-step" in argv:
-        # The STEPPED breach (Atul's 7th-July /breach command). Lift the CURRENT active limiter
+        # The STEPPED breach (the owner's 7th-July /breach command). Lift the CURRENT active limiter
         # and run until the NEXT tier rung above- across BOTH session and weekly, whichever
         # first- then self-clear so he must /breach again to step further. DISTINCT from
         # --override (80->90 big band only) and --breach (lifts ALL bands for a fixed
@@ -5884,7 +5884,7 @@ def main(argv):
         print("breach cleared- normal bands back in force (90% vital-only wall)")
         return 0
     if "--quiet95" in argv:
-        # The 95-ONLY window (Atul, 8th July MAX period). Mutes the 80/90 SESSION band
+        # The 95-ONLY window (the owner, 8th July MAX period). Mutes the 80/90 SESSION band
         # pings and swaps them for one 95% heads-up. Default 8h- covers a MAX session;
         # auto-expires. Governor ENFORCEMENT is untouched (use --breach for that).
         i = argv.index("--quiet95")
@@ -6019,7 +6019,7 @@ def main(argv):
         if len(pos) < 2:
             print('usage: --queue "<task>" "<first step>" --note <path to its PRD> '
                   '[--state "<summary>"] '
-                  '[--priority N] [--touch "a,b,@c"] [--gate atul] [--verify "<shell cmd>"] '
+                  '[--priority N] [--touch "a,b,@c"] [--gate owner] [--verify "<shell cmd>"] '
                   '[--verify-assert "<claim a checker must prove>"] [--source-mid <discord id>] '
                   '[--dup-ok] [--prd-exempt]\n'
                   '       --note must point at a document inside 60-PRDs/. Route a fresh ask '
@@ -6050,10 +6050,10 @@ def main(argv):
         # text, so a worker re-queueing its own placeholder with better prose upgrades that
         # row instead of forking a twin beside it. Without this flag the only way to reach
         # that dedup was to import the module, so every CLI caller queueing for a message
-        # Atul had already been given a placeholder for silently doubled it.
+        # the owner had already been given a placeholder for silently doubled it.
         smid = argv[argv.index("--source-mid") + 1] if "--source-mid" in argv else ""
         # The channel that ask arrived in. build_worker_prompt() renders it into the lane's
-        # REPLY VIA line, so the finished build answers where Atul asked rather than in
+        # REPLY VIA line, so the finished build answers where the owner asked rather than in
         # #general. 15:40 on 9th July: the live session queued his shred question from
         # #deadlock-research with neither flag, and the answer came back to the wrong room.
         scid = argv[argv.index("--source-channel") + 1] if "--source-channel" in argv else ""
@@ -6064,7 +6064,7 @@ def main(argv):
         if _is_fixture(pos[0]):
             gate, solo = FIXTURE_TASK_GATE, True
             _log(f"fixture queued (gated on {FIXTURE_TASK_GATE}, unpumpable): {pos[0][:60]}")
-        # A touch-set is MANDATORY (Atul, 9th July). Judge the entry as it will EXIST, not as
+        # A touch-set is MANDATORY (the owner, 9th July). Judge the entry as it will EXIST, not as
         # it was typed: re-queueing a declared task to bump its priority passes no --touch, and
         # enqueue() preserves the old set- that must keep working. Only an entry that would end
         # up genuinely undeclared is refused.
@@ -6094,11 +6094,11 @@ def main(argv):
         ver = argv[argv.index("--verify") + 1] if "--verify" in argv else ""
         vas = argv[argv.index("--verify-assert") + 1] if "--verify-assert" in argv else ""
         dup_ok = "--dup-ok" in argv
-        # THE PRD GATE (Atul, 9th July: "a rigorous prd before it gets filed"). A big task
+        # THE PRD GATE (the owner, 9th July: "a rigorous prd before it gets filed"). A big task
         # arrives as a document or it does not arrive. `--prd-exempt` is the vitals bypass-
         # a CoC-bot fix cannot wait on an Opus round-trip- and every use of it is appended to
         # the rejects log. A bypass nobody can count becomes the norm, and the guard's own log
-        # is how Atul knows the gate is alive (9th July 08:46).
+        # is how the owner knows the gate is alive (9th July 08:46).
         prd_exempt = "--prd-exempt" in argv
         # `--queue` is the ONE caller that opts into semantic dedup, because it is the boundary
         # where a fresh human or agent ask enters. halt(), baxter_triage._park, the fast lane's
@@ -6127,7 +6127,7 @@ def main(argv):
         except DuplicateTask as dup:
             # The redirect is already unwound; the refusal below prints to the real stdout.
             sys.stdout.write(_cap.getvalue())
-            # The refusal Atul sees is an EXIT CODE. Printing without returning 2 would let the
+            # The refusal the owner sees is an EXIT CODE. Printing without returning 2 would let the
             # caller carry on believing the task was scheduled- the whole bug, one layer up.
             reason = (f"near-duplicate of {dup.colliding_id}: {dup.colliding_task[:80]}"
                       if dup.colliding_id else f"near-duplicate: {dup.colliding_task[:80]}")
@@ -6137,14 +6137,14 @@ def main(argv):
                   "Two lanes on one stale ticket is what this guard exists to stop. Check whether\n"
                   "the work has already shipped; if this really is a second pass over the same\n"
                   "subsystem, say so out loud with --dup-ok.")
-            # A guard with no log reads as a guard that never fires (Atul, 9th July 08:46).
+            # A guard with no log reads as a guard that never fires (the owner, 9th July 08:46).
             record_reject(pos[0], reason, kind="duplicate", priority=prio)
             return 2
         except MissingPRD as miss:
             sys.stdout.write(_cap.getvalue())
             reason = (f"--note {miss.note} is not a document inside {Path(PRD_DIR).name}/"
                       if miss.note else "filed as a bare task string, with no PRD behind it")
-            # REFUSE THE BUILD. NEVER LOSE THE ASK. (Atul, 10th July: "my builds in the build q
+            # REFUSE THE BUILD. NEVER LOSE THE ASK. (the owner, 10th July: "my builds in the build q
             # are disappearing... I've asked like 5 times to do it but it keeps disappearing.")
             # This guard landed at ~09:45 and by 14:05 it had silently destroyed FOURTEEN of his
             # asks- including the Codex doctor-themed pfp and the drag-and-drop queue UI he had
@@ -6152,12 +6152,12 @@ def main(argv):
             # wrote one line to the rejects log, and returned 2. The ask itself went nowhere.
             #
             # A guard is allowed to say "not like this". It is never allowed to be the reason a
-            # thing Atul asked for ceases to exist. So the ask is PARKED: it lands in the queue
+            # thing the owner asked for ceases to exist. So the ask is PARKED: it lands in the queue
             # gated on 'prd', which is not a GATE_NONE value, so the pump can never hand it a
             # lane- but /queue shows it, --edit reaches it, and writing its PRD and lifting the
             # gate is all it takes to build it.
             #
-            # AND A PARK IS AN ACCEPTANCE, SO IT EXITS 0 (Atul, 11th July: "im asking you to do a
+            # AND A PARK IS AN ACCEPTANCE, SO IT EXITS 0 (the owner, 11th July: "im asking you to do a
             # task. your purpose is to send this to the PM to create the PRD lol"). This branch
             # used to print "refused: no PRD." and return 2 having ALREADY parked the ask and
             # spawned the PM. The exit code is the only thing a caller reliably reads, so every
@@ -6181,7 +6181,7 @@ def main(argv):
             except DuplicateTask:
                 already = True             # already waiting on the PM from an earlier ask
             except Exception as exc:
-                # A CRASH IS NOT A REFUSAL (Atul, 11th July). This handler logged one line and
+                # A CRASH IS NOT A REFUSAL (the owner, 11th July). This handler logged one line and
                 # fell through to `refused: no PRD.` + return 2- the house code for a POLICY
                 # refusal- so a ModuleNotFoundError raised inside enqueue() came back to the
                 # caller wearing the PRD gate's name. The dup_guard exam read its own crash as
@@ -6230,7 +6230,7 @@ def main(argv):
                     drafting = True
                 except Exception as exc:
                     _log(f"PM spawn failed at the park: {exc.__class__.__name__}: {exc}")
-            # A guard with no log reads as a guard that never fires (Atul, 9th July 08:46). The
+            # A guard with no log reads as a guard that never fires (the owner, 9th July 08:46). The
             # row lands whichever way this went: an accepted park is still the gate biting.
             record_reject(pos[0], reason, kind="prd_missing", priority=prio)
             if parked or already:
@@ -6289,7 +6289,7 @@ def main(argv):
             print('usage: --edit "<id or unambiguous substring>" [--retext "<new text>"] [--priority N]\n'
                   '              [--touch "a,b,@c"] [--verify "<cmd>"] [--verify-assert "<claim>"]\n'
                   '              [--note <path>] [--next "<next step>"] [--state "<summary>"]\n'
-                  '              [--gate atul|none] [--force]')
+                  '              [--gate owner|none] [--force]')
             return 1
         def _opt(flag):
             return argv[argv.index(flag) + 1] if flag in argv and len(argv) > argv.index(flag) + 1 else None
@@ -6342,7 +6342,7 @@ def main(argv):
         print(msg)
         return 0 if ok else 1
     if "--ungate" in argv:
-        # Atul said go: lift the human gate so the pump can pick the task up.
+        # the owner said go: lift the human gate so the pump can pick the task up.
         i = argv.index("--ungate")
         pat = (argv[i + 1] if len(argv) > i + 1 else "").strip().lower()
         if not pat:
@@ -6423,7 +6423,7 @@ def main(argv):
                   f" | touch: {t if t else 'SOLO (undeclared)'}")
         return 0
     if "--report" in argv:
-        # Atul's /usage COMMAND (5th July): compose the basic-info line and SEND it-
+        # the owner's /usage COMMAND (5th July): compose the basic-info line and SEND it-
         # a pure code path, no LLM turn, near-instant. Use the cached meter when fresh
         # (triage keeps it ≤4 min); only pay the network round-trip if it's >60s stale.
         snap = read_meters()

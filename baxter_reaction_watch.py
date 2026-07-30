@@ -1,6 +1,6 @@
-"""baxter_reaction_watch - the reaction-lifecycle self-audit (Atul, 8th July).
+"""baxter_reaction_watch - the reaction-lifecycle self-audit (the owner, 8th July).
 
-Guarantees every message of Atul's moves cleanly through 👀 (seen) -> ⚙️ (working)
+Guarantees every message of the owner's moves cleanly through 👀 (seen) -> ⚙️ (working)
 -> ✅ (answered), and that a dropped or false reaction self-heals instead of him
 having to spot it. A short-lived one-shot (like the fast lane): the watcher fires it
 from the existing 15s slice loop, it self-throttles to ~once a minute, and each fire
@@ -32,8 +32,8 @@ Also: adds the 👀 seen-backstop to any un-reacted message of his, and escalate
 the "nothing sits unanswered" guarantee. It does NOT speculatively add a ⚙️ (only the
 lane actually working a message knows that) and it never composes an answer.
 
-Read-mostly; the only writes are lifecycle reactions on Atul's own messages and, past
-the stuck threshold, a single quiet ping to Atul. Never acts outward.
+Read-mostly; the only writes are lifecycle reactions on the owner's own messages and, past
+the stuck threshold, a single quiet ping to the owner. Never acts outward.
 
   python baxter_reaction_watch.py            # one throttled audit pass (the slice-loop entry)
   python baxter_reaction_watch.py --force    # ignore the ~60s self-throttle, audit now
@@ -64,7 +64,7 @@ CHANNELS = {
 }
 
 MIN_INTERVAL = 60        # self-throttle: skip if the last real pass ran <60s ago (the
-                         # slice loop fires us every 15s; ~60s cadence is what Atul asked)
+                         # slice loop fires us every 15s; ~60s cadence is what the owner asked)
 FETCH_LIMIT = 50         # recent messages per channel to audit
 EYE_GRACE = 30           # don't add the seen-backstop 👀 in a message's first 30s- give
                          # the live session / fast lane their react-on-read first
@@ -73,7 +73,7 @@ PHANTOM_AFTER = 1200     # 20 min: a ⚙️ 'actively working' mark with no ✅ 
                          # worker self-terminates at ~15 min (baxter_reply_worker.TURN_TIMEOUT)
                          # and drops its own cog, so a cog surviving past 20 min is a corpse's
                          # speculative stamp, never real work. Strip it (the 10th-July audit).
-STUCK_AFTER = 1800       # 30 min with no delivered reply -> surface it to Atul (once)
+STUCK_AFTER = 1800       # 30 min with no delivered reply -> surface it to the owner (once)
 STUCK_MIN_LEN = 4        # skip trivial acks ("ok", "ty") from the stuck escalation
 # Channels whose asks are answered by a SEPARATE daemon that doesn't use native replies
 # (so "no message_reference" is NOT proof it went unanswered)- excluded from the stuck
@@ -150,7 +150,7 @@ def _react(ch, mid, emoji, method, tok):
 
 
 def _say(msg):
-    """One quiet line to Atul (phone push). Used only for a genuinely stuck message.
+    """One quiet line to the owner (phone push). Used only for a genuinely stuck message.
 
     Returns True only if it actually left. Exit 3 is a DENIAL: baxter_say refused the claim,
     printed why, and sent nothing- record the reason in the voiceless denial sink and hand back
@@ -177,7 +177,7 @@ def _reaction_flags(m):
             any(TICK in n for n in names), any(HANDSOFF in n for n in names))
 
 
-def audit_once(tok, atul_id, bot_id, state, repair=True, silence_stuck=False,
+def audit_once(tok, owner_id, bot_id, state, repair=True, silence_stuck=False,
                stuck_after=STUCK_AFTER):
     """Scan every channel once. Returns a summary dict. Mutates `state` (the escalation
     dedup map), and when repair=True applies the safe self-heals. silence_stuck marks the
@@ -206,7 +206,7 @@ def audit_once(tok, atul_id, bot_id, state, repair=True, silence_stuck=False,
             and (m.get("message_reference") or {}).get("message_id")
         }
         for m in msgs:
-            if str((m.get("author") or {}).get("id")) != str(atul_id):
+            if str((m.get("author") or {}).get("id")) != str(owner_id):
                 continue
             mid = str(m["id"])
             eye, cog, tick, handsoff = _reaction_flags(m)
@@ -257,7 +257,7 @@ def audit_once(tok, atul_id, bot_id, state, repair=True, silence_stuck=False,
 
             # FALSE TICK (the 14:11 bug): a ✅ sitting on a message with no findable
             # delivered reply. VERIFY-BEFORE-REPAIR means we NEVER re-tick an unanswered
-            # message- but stripping a tick Atul has already seen is its own destructive
+            # message- but stripping a tick the owner has already seen is its own destructive
             # guess (the tick may mark a plain-send ack or a deliberate stand-back), so we
             # FLAG, never remove ([[confirmations-must-be-reply-tool-calls]]). If it's a
             # Baxter-addressed ask it rides the same stuck escalation below.
@@ -271,7 +271,7 @@ def audit_once(tok, atul_id, bot_id, state, repair=True, silence_stuck=False,
                     repairs.append((name, mid, "added seen backstop", snip))
 
             # "nothing sits unanswered": a Baxter-addressed message with no delivered
-            # reply past the threshold is surfaced to Atul ONCE (de-duped by id). Daemon
+            # reply past the threshold is surfaced to the owner ONCE (de-duped by id). Daemon
             # channels (coc-farm answers without native replies) are excluded.
             if (age >= stuck_after and len(content) >= STUCK_MIN_LEN and addressed
                     and name not in STUCK_SKIP_CHANNELS and mid not in escalated):
@@ -305,7 +305,7 @@ def audit_once(tok, atul_id, bot_id, state, repair=True, silence_stuck=False,
 def _run(force=False, repair=True):
     sec = _secrets()
     tok = sec["discord_bot_token"]
-    atul_id = str(sec.get("discord_only_user_id", ""))
+    owner_id = str(sec.get("discord_only_user_id", ""))
     state = _read_state()
     now = datetime.now().timestamp()
     if not force:
@@ -331,7 +331,7 @@ def _run(force=False, repair=True):
             bot_id = str(_get("https://discord.com/api/v10/users/@me", tok)["id"])
             state["bot_id"] = bot_id
         first_live = repair and not state.get("initialized")
-        summary = audit_once(tok, atul_id, bot_id, state, repair=repair, silence_stuck=first_live)
+        summary = audit_once(tok, owner_id, bot_id, state, repair=repair, silence_stuck=first_live)
         if first_live:
             state["initialized"] = True
         state["last_run"] = datetime.now().isoformat()
@@ -356,7 +356,7 @@ def _selftest():
     """
     import sys as _sys
     mod = _sys.modules[__name__]
-    ATUL, BOT, GEN = "1000", "2000", CHANNELS["general"]
+    OWNER, BOT, GEN = "1000", "2000", CHANNELS["general"]
     calls = []                                   # (ch, mid, emoji, method)
     ages = {"p1": 1500, "f1": 60, "d1": 1500, "r1": 1500, "b1": 1500}
 
@@ -364,13 +364,13 @@ def _selftest():
         return [{"emoji": {"name": n}} for n in names]
 
     fixtures = [
-        {"id": "p1", "author": {"id": ATUL}, "content": "phantom- nobody is on this",
+        {"id": "p1", "author": {"id": OWNER}, "content": "phantom- nobody is on this",
          "reactions": _rx(GEAR_FULL)},
-        {"id": "f1", "author": {"id": ATUL}, "content": "fresh- a worker just started",
+        {"id": "f1", "author": {"id": OWNER}, "content": "fresh- a worker just started",
          "reactions": _rx(GEAR_FULL)},
-        {"id": "d1", "author": {"id": ATUL}, "content": "already answered and ticked",
+        {"id": "d1", "author": {"id": OWNER}, "content": "already answered and ticked",
          "reactions": _rx(GEAR_FULL, TICK_FULL)},
-        {"id": "r1", "author": {"id": ATUL}, "content": "answered, tick just dropped",
+        {"id": "r1", "author": {"id": OWNER}, "content": "answered, tick just dropped",
          "reactions": _rx(GEAR_FULL)},
         {"id": "b1", "author": {"id": BOT}, "content": "the delivered reply",
          "reactions": [], "message_reference": {"message_id": "r1"}},
@@ -389,7 +389,7 @@ def _selftest():
     mod._say = lambda *a, **k: True
     mod._snowflake_age = lambda mid: float(ages.get(str(mid), 0))
     try:
-        summary = audit_once(tok="x", atul_id=ATUL, bot_id=BOT, state={}, repair=True)
+        summary = audit_once(tok="x", owner_id=OWNER, bot_id=BOT, state={}, repair=True)
     finally:
         mod._get, mod._react, mod._say, mod._snowflake_age = orig
 

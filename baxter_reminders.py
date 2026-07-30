@@ -1,4 +1,4 @@
-"""baxter_reminders — durable ad-hoc reminder store + poller (Atul, 8th July 22:24).
+"""baxter_reminders — durable ad-hoc reminder store + poller (the owner, 8th July 22:24).
 
 The trust bug this fixes: a confirmed reminder ("ping me in 10 mins to hop on CoC")
 lived only as a chat acknowledgement- nothing scheduled the fire, so it evaporated the
@@ -33,7 +33,7 @@ SAY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "baxter_say.py")
 LOG = os.path.join(VAULT, ".baxter.log")
 
 # Instruction injected into the live/fast/listener reply prompts so EVERY Baxter that
-# talks to Atul knows to register a real trigger before it acknowledges a reminder.
+# talks to the owner knows to register a real trigger before it acknowledges a reminder.
 REMINDER_RULE = (
     "REMINDERS/TIMERS: if he asks you to remind/ping/nudge him at or after some time "
     "('remind me in 10 mins', 'ping me in an hour', 'nudge me at 9pm', 'in 2h remind me to X'), "

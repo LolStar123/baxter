@@ -1,6 +1,6 @@
 r"""baxter_stuck_doctor - a lane that has stopped THINKING, not merely a lane that is slow.
 
-Atul, 8th July 21:38: "when any Baxter task/build runs past a 15-min threshold, auto-summon
+the owner, 8th July 21:38: "when any Baxter task/build runs past a 15-min threshold, auto-summon
 the doctor to health-check that instance- if healthy leave it, if wedged diagnose+repair."
 
 Elapsed time is the TRIGGER TO LOOK, never the finding. A build that has run twenty minutes
@@ -771,7 +771,7 @@ def _selftest():
     (tmp / ".baxter_resume").mkdir()
 
     # A selftest that reaches an outward path has already spawned an LLM fan-out and posted a
-    # fabricated alert into Atul's server. Rig all three to explode ([[selftests-stub-every-outward-path]]).
+    # fabricated alert into the owner's server. Rig all three to explode ([[selftests-stub-every-outward-path]]).
     import health_monitor as _hm
     boom = lambda *a, **k: (_ for _ in ()).throw(AssertionError("selftest reached an outward path"))
     saved = (subprocess.Popen, subprocess.run, _hm.post)

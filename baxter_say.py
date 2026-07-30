@@ -1,7 +1,7 @@
-"""baxter_say — Baxter's voice in Atul's Discord server (Potaters Doohickeys ONLY).
+"""baxter_say — Baxter's voice in the owner's Discord server (Potaters Doohickeys ONLY).
 
 Used by triage runs to answer/clarify and by the reminder engine to ping his phone.
-Posts only to Atul's own channels — never to anyone else, never outside the server.
+Posts only to the owner's own channels — never to anyone else, never outside the server.
 
   python baxter_say.py "message"                          -> #general, with @mention
   python baxter_say.py --reply-to <message_id> "message"  -> native Discord REPLY to that
@@ -45,7 +45,7 @@ try:
 except Exception:
     _dedup = None
 # outbound text hygiene: repairs UTF-8/cp1252 mojibake + the banned " / " paragraph-break
-# shorthand, on every message that leaves through this door (Atul, 8th July).
+# shorthand, on every message that leaves through this door (the owner, 8th July).
 try:
     import baxter_text as _text
 except Exception:
@@ -161,8 +161,8 @@ def main():
     # Hygiene BEFORE the footer and before the dedup claim, so the guarded text is exactly
     # the text that gets posted.
     msg = _sanitise(msg)
-    # Exact per-turn token footer (Atul's standing order). ONLY on live conversational
-    # replies Atul reads - never on --no-mention Workshop logs, and only when this send
+    # Exact per-turn token footer (the owner's standing order). ONLY on live conversational
+    # replies the owner reads - never on --no-mention Workshop logs, and only when this send
     # is fired by the live `--channels` session (footer_if_live self-checks and returns
     # '' otherwise, so workers/logs are untouched). OUTPUT tokens = the clean, exact,
     # measured figure. Appended before the dedup claim so what's guarded == what's sent.
@@ -241,7 +241,7 @@ def main():
             except Exception: pass
         raise
     if reply_to:                                     # a reply = completion -> stamp target ✅, drop ⚙️
-        # ✅ FIRST (the "answered" signal Atul reads) with a retry, THEN drop the ⚙️ cog.
+        # ✅ FIRST (the "answered" signal the owner reads) with a retry, THEN drop the ⚙️ cog.
         # Order + retry matter: the old code did DELETE ⚙️ then a single PUT ✅ that got
         # silently eaten by a transient 429/timeout, leaving his message stuck on 👀.
         import urllib.parse as _up, time as _t

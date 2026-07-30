@@ -27,7 +27,7 @@ import baxter_rules as _rules
 def _claude(cls="heavy", mcp=None):
     """The argv prefix for every claude spawn in this module. Never build one by hand-
     a hardcoded ['claude', '--model', 'opus'] silently re-inherits all five global MCP
-    servers, which is the spawn storm that starves Atul's interactive TUI.
+    servers, which is the spawn storm that starves the owner's interactive TUI.
 
     TWO AXES (9th July). The first argument is a WORK CLASS- what this job needs to be
     clever enough for ('file', 'prose', 'classify', 'build', ...)- and it alone picks the
@@ -65,7 +65,7 @@ SECRETS = VAULT / ".baxter_secrets.json"   # local only; holds discord token etc
 INBOX = VAULT / "00-Inbox"
 CONTRACT = VAULT / "BAXTER_TRIAGE.md"
 HEARTBEAT = VAULT / ".baxter_heartbeat.txt"   # self-healing watcher reads this
-OFF_FLAG = VAULT / ".baxter_off"              # master OFF switch (Atul's /off): soft-pause the
+OFF_FLAG = VAULT / ".baxter_off"              # master OFF switch (the owner's /off): soft-pause the
                                               # proactive machinery- briefs, pings, filing, auto-work.
                                               # The fast lane stays live so /on + his questions land.
 CATCHUP = VAULT / ".baxter_catchup"           # one-shot: /on drops this so the first pass after a
@@ -82,11 +82,11 @@ OPENER = r"C:\Users\you\Documents\Python Scripts\utils\baxter_open.ps1"
 
 # Every child we spawn runs fully SILENT - stdin/stdout/stderr detached, no console
 # window. A triage that inherited a console (e.g. orphaned from a dead terminal) must
-# never let its children spray output onto Atul's screen.
+# never let its children spray output onto the owner's screen.
 _SILENT = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
 _NO_WIN = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 CONVOS = r"C:\Users\you\Documents\Python Scripts\utils\convos.py"
-BAXTER_SAY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_say.py"   # Baxter's Discord voice (Atul's server only)
+BAXTER_SAY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_say.py"   # Baxter's Discord voice (the owner's server only)
 USAGE_PY = r"C:\Users\you\Documents\Python Scripts\utils\baxter_usage.py"   # the meters + governor (5th-July build)
 
 # usage governor (contract step 29): probe writes .baxter_usage.json; check() gates work
@@ -250,7 +250,7 @@ def maybe_usage():
         _gov.probe()
     except Exception as e:
         log(f"usage probe failed: {e}")
-PENDING_Q = VAULT / ".baxter_pending_q.json"      # clarifying questions Baxter has asked, awaiting Atul's answer
+PENDING_Q = VAULT / ".baxter_pending_q.json"      # clarifying questions Baxter has asked, awaiting the owner's answer
 
 def load_state():
     if STATE.exists():
@@ -291,7 +291,7 @@ def _email_body(msg):
 
 def _food_deal(item):
     """Uber Eats / Deliveroo RESTAURANT promos: instant Discord ping + vault log.
-    Atul explicitly wants these (3rd July)- restaurants only, never grocery/shop offers."""
+    the owner explicitly wants these (3rd July)- restaurants only, never grocery/shop offers."""
     frm = (item.get("from") or "").lower()
     if not re.search(r"uber\s*eats|@uber\.|deliveroo", frm):
         return False
@@ -319,7 +319,7 @@ def _food_deal(item):
     except Exception as e:
         log(f"deals board update failed: {e}")
     item["note"] = (f"RESTAURANT FOOD DEAL ({plat}) - already on the live #deals board"
-                    + (f" as `{deal_id}`" if deal_id else "") + " and Atul was pinged there; do NOT ping again. "
+                    + (f" as `{deal_id}`" if deal_id else "") + " and the owner was pinged there; do NOT ping again. "
                     "Read the email body for the exact promo code and STATED end date, then enrich the board "
                     f"deal: python \"C:\\Users\\you\\Documents\\Python Scripts\\utils\\baxter_deals.py\" --update {deal_id or '<id>'} "
                     "[--code <code>] [--end YYYY-MM-DD] [--offer <short offer>]. That republishes the board and "
@@ -330,7 +330,7 @@ def _food_deal(item):
     return True
 
 def _junk_senders():
-    """Senders Atul unsubscribed from in the 4th-July deep-clean- new mail from them
+    """Senders the owner unsubscribed from in the 4th-July deep-clean- new mail from them
     is auto-trashed at fetch time (tell Baxter to whitelist anyone wrongly caught)."""
     try:
         return set(json.loads((VAULT / ".baxter_junk_senders.json")
@@ -358,7 +358,7 @@ def fetch_new_emails(state):
         if not addr or not pw:
             continue
         last_uid = int(uid_map.get(addr, 0) or 0)
-        # host defaults to Gmail; a non-Gmail account (e.g. UCL @ucl.ac.uk on
+        # host defaults to Gmail; a non-Gmail account (e.g. an institutional account on
         # Office 365) just carries its own imap_host in .baxter_secrets.json.
         host = acct.get("imap_host", "imap.gmail.com")
         is_gmail = "gmail" in host
@@ -398,13 +398,13 @@ def fetch_new_emails(state):
                     "body": _email_body(msg)[:4000],
                 }
                 if acct.get("always_attention"):
-                    item["note"] = ("This arrived on Atul's rarely-used but HIGH-IMPORTANCE account "
+                    item["note"] = ("This arrived on the owner's rarely-used but HIGH-IMPORTANCE account "
                                     f"({addr}) - anything landing here is significant. Flag #attention.")
                 else:
                     _food_deal(item)   # Uber Eats/Deliveroo restaurant promos: instant ping + log
                 items.append(item)
                 uid_map[addr] = max(int(uid_map.get(addr, 0) or 0), uidn)
-            # ---- SENT mail: poll Atul's own outgoing so Baxter can close loops ----
+            # ---- SENT mail: poll the owner's own outgoing so Baxter can close loops ----
             # (mark tasks done when he's emailed the thing, mark drafts sent, spot new
             #  awaiting-replies). First encounter just records the cursor - no flood.
             try:
@@ -435,7 +435,7 @@ def fetch_new_emails(state):
                                 "subject": _decode_hdr(msg.get("Subject")),
                                 "received": msg.get("Date", ""),
                                 "body": _email_body(msg)[:2500],
-                                "note": ("This is an email ATUL HIMSELF SENT - evidence of completed action. "
+                                "note": ("This is an email OWNER HIMSELF SENT - evidence of completed action. "
                                          "Close matching open tasks/drafts/awaiting items per the contract; "
                                          "never create a to-do from it (except a new awaiting-reply if he asked "
                                          "someone for something)."),
@@ -508,11 +508,11 @@ def fetch_new_discord(state):
                                 "work (file/task/draft) if it contains new work beyond the reply; "
                                 "otherwise skip silently.")
             elif "333333333333333301" in content or str(((m.get("referenced_message") or {}).get("author") or {}).get("id")) == "333333333333333301":
-                item["note"] = ("Atul @mentioned Baxter / replied to Baxter here - the LIVE channel "
+                item["note"] = ("the owner @mentioned Baxter / replied to Baxter here - the LIVE channel "
                                 "session is answering him in real time. Do NOT reply. File durable "
                                 "work only if the message contains any; otherwise skip silently.")
             ch_items.append(item)
-        # chronology fix (Atul, 4th July): a dump is a TURN in a conversation, not a
+        # chronology fix (the owner, 4th July): a dump is a TURN in a conversation, not a
         # standalone note. Attach the channel's last messages (BOTH sides, oldest-first)
         # so the worker reads each item in thread order - the cursor fetch above only
         # returns NEW messages, which strips Baxter's replies and everything before.
@@ -592,8 +592,8 @@ def fetch_new_whatsapp(state):
             "note": ("WHATSAPP INGESTION- read-only. Most WhatsApp traffic is social "
                      "chatter: file NOTHING for it, skip silently (no inbox note, no "
                      "daily-log line). Only act when a message carries a real plan, "
-                     "task, date, money matter or something Atul must see- then triage "
-                     "per the contract. Lines from 'Atul' are his OWN sent messages- "
+                     "task, date, money matter or something the owner must see- then triage "
+                     "per the contract. Lines from 'the owner' are his OWN sent messages- "
                      "commitments he made are tasks ('I'll send it tomorrow' -> task). "
                      "NEVER draft or send a WhatsApp reply- no outward action exists "
                      "on this source."),
@@ -643,9 +643,9 @@ def fetch_claude_activity(state):
         if sid not in known:
             known.add(sid)
             items.append({"id": f"cc-new-{sid[:8]}", "source": "claude-chat",
-                          "from": "Atul", "subject": f"NEW Claude chat ({b['section']})",
+                          "from": "the owner", "subject": f"NEW Claude chat ({b['section']})",
                           "received": b.get("last_ts", ""),
-                          "body": (f"Atul just started a new Claude conversation "
+                          "body": (f"the owner just started a new Claude conversation "
                                    f"(project guess: {b['section']}, folder: {b.get('cwd','?')}). "
                                    f"Opening message: {b['snippets'][-1] if b['snippets'] else '(none)'}")})
             b["snippets"] = []          # announced; later messages flush on quiet
@@ -658,9 +658,9 @@ def fetch_claude_activity(state):
             if b.get("snippets"):
                 joined = "\n- ".join(b["snippets"])
                 items.append({"id": f"cc-act-{sid[:8]}-{now.strftime('%H%M')}", "source": "claude-chat",
-                              "from": "Atul", "subject": f"Claude chat activity ({b['section']})",
+                              "from": "the owner", "subject": f"Claude chat activity ({b['section']})",
                               "received": b.get("last_ts", ""),
-                              "body": (f"Recent messages Atul sent in an ongoing Claude conversation "
+                              "body": (f"Recent messages the owner sent in an ongoing Claude conversation "
                                        f"(project: {b['section']}). Judge if anything here is a NEW workable "
                                        f"item for the vault; ignore pure working-chatter with that Claude:\n- {joined}")})
             del buf[sid]
@@ -681,7 +681,7 @@ def fetch_new_queue(state):
     except Exception:
         pass
     stamp = datetime.now().strftime("%H%M%S")
-    return [{"id": f"q-{stamp}-{i}", "source": "quickadd", "from": "Atul",
+    return [{"id": f"q-{stamp}-{i}", "source": "quickadd", "from": "the owner",
              "subject": "quick add", "received": "", "body": t} for i, t in enumerate(lines)]
 
 # ---- photo drop folder (drop a screenshot/photo; Baxter OCRs + triages it) ----
@@ -709,7 +709,7 @@ def triage_photos(paths):
         return
     listing = "\n".join(f"- {p}" for p in paths)
     prompt = (
-        f"You are Baxter. Read {CONTRACT} and follow it exactly. Atul dropped {len(paths)} "
+        f"You are Baxter. Read {CONTRACT} and follow it exactly. the owner dropped {len(paths)} "
         f"image(s) into 60-Photos. For EACH image, use your Read tool to view it, extract any "
         f"text/dates/amounts/action items (receipts, screenshots, whiteboards, posters), then "
         f"triage per the contract (inbox note + tasks + daily log). NEVER send anything.\n\nIMAGES:\n{listing}"
@@ -743,15 +743,15 @@ def fetch_new_chat():
     return msgs
 
 def run_baxter_chat(messages):
-    """General-purpose agent: whatever Atul typed in the dashboard chatbox, do it
+    """General-purpose agent: whatever the owner typed in the dashboard chatbox, do it
     in the vault. Create/rephrase/cut/reschedule tasks, answer, draft, reorganise.
     Replies are appended to Baxter-Chat.md so the dashboard thread shows them."""
     for msg in messages:
         now = datetime.now().strftime("%H:%M")
         prompt = (
-            f"You are Baxter, Atul's personal assistant, operating directly inside his Obsidian vault at {VAULT}. "
+            f"You are Baxter, the owner's personal assistant, operating directly inside his Obsidian vault at {VAULT}. "
             f"Read {CONTRACT} for conventions (COMMAND vs CAPTURE, tags, hyphen style, never send outward). "
-            f"Atul just typed this into his Baxter command box:\n\n\"{msg}\"\n\n"
+            f"the owner just typed this into his Baxter command box:\n\n\"{msg}\"\n\n"
             f"DO EXACTLY WHAT HE ASKED — it can be ANYTHING: create / rephrase / re-tag / cut (reversible) / "
             f"reprioritise / reschedule a task (fuzzy-match it across 00-Inbox and project notes), answer a "
             f"question about his vault or projects, draft a message into 40-Drafts, research into 50-Research, "
@@ -759,7 +759,7 @@ def run_baxter_chat(messages):
             f"'always do Y', 'never do Z', 'I don't want...') — fix the immediate thing AND record the rule "
             f"permanently: append/amend it in {CONTRACT} (Hard rules or the relevant step) so it applies to every "
             f"future triage, and note in your reply that it's now a standing rule. Also update Subscriptions.md "
-            f"when he reports cancelling/keeping a subscription. **his Discord handle IS Atul** — never third-person him. "
+            f"when he reports cancelling/keeping a subscription. **his Discord handle IS the owner** — never third-person him. "
             f"When finished, APPEND your reply to {CHAT_LOG} (create the file if missing) under a heading line "
             f"exactly like '## 🎩 Baxter - {now}'. BE BRIEF — 1-2 short lines by default, like a sharp PA "
             f"confirming it's done ('Renamed it.' / 'Killed that one - it's in History.' / 'Drafted - in 40-Drafts.'). "
@@ -798,12 +798,12 @@ def fetch_new_questions():
 
 def answer_questions(questions):
     """Wake Claude to answer natural-language questions ABOUT the vault.
-    (Atul-direct = vital class- only the probe's fail-safe would ever hold it.)
+    (the owner-direct = vital class- only the probe's fail-safe would ever hold it.)
     Read-only intent: search the vault and write a short answer note; never send."""
     qjoined = "\n".join(f"- {q}" for q in questions)
     today = datetime.now().strftime("%Y-%m-%d")
     prompt = (
-        f"You are Baxter. Atul asked the following question(s) about his own vault at {VAULT}.\n"
+        f"You are Baxter. the owner asked the following question(s) about his own vault at {VAULT}.\n"
         f"Search the vault (tasks, 00-Inbox, 20-Projects, 30-Daily, 40-Drafts) and ANSWER them.\n"
         f"Write the answer to {VAULT}/00-Inbox/{today} {datetime.now().strftime('%H%M')} - Ask Baxter.md "
         f"with frontmatter (source: ask, project: baxter, needs_attention: false, confidence: high|medium|low) "
@@ -838,7 +838,7 @@ def senders_hint():
 # Quiet hours (22:00-07:00) suppress only ROUTINE balloons- no point popping a PC
 # balloon overnight for a filing. A MANDATED ping (usage band-cross / urgent /
 # follow-up nudge / resume) passes mandatory=True and fires any hour- the quiet-hours
-# rule was scrapped for those (Atul, 6th July 22:06). Phone pushes go via _say/baxter_say,
+# rule was scrapped for those (the owner, 6th July 22:06). Phone pushes go via _say/baxter_say,
 # which has no night gate; this is the local desktop balloon only.
 NOTIFY = Path(r"C:\Users\you\Documents\Python Scripts\utils\baxter_notify.ps1")
 def notify(title, msg, mandatory=False):
@@ -897,8 +897,8 @@ def maybe_briefing(state):
         log(f"briefing failed: {e}")
 
 def mirror_briefing_to_discord(today):
-    """OPT-IN: post today's briefing to Atul in the PD SERVER CHANNEL with an @mention (NOT a DM —
-    Atul 2026-07-03: 'only communicate via the PD server, ping me'). OFF unless
+    """OPT-IN: post today's briefing to the owner in the PD SERVER CHANNEL with an @mention (NOT a DM —
+    the owner 2026-07-03: 'only communicate via the PD server, ping me'). OFF unless
     discord_dm_briefing:true in .baxter_secrets.json. The ONE sanctioned outward action."""
     sec = load_secrets()
     if not sec.get("discord_dm_briefing"):
@@ -1006,7 +1006,7 @@ def maybe_reprioritize(state):
 
 # ---- stale-task auto-demote (long-overdue + untouched -> drop urgency, tag #stale) ----
 def maybe_rejig(state):
-    """Hourly build-order re-triage (Atul, 9th July: "just do it every so often, unimportantly").
+    """Hourly build-order re-triage (the owner, 9th July: "just do it every so often, unimportantly").
 
     NOT `maybe_reprioritize` above- that one bumps VAULT TASK lines by due date. This re-bands
     the BUILD QUEUE off each entry's impact/effort quadrant. Two different queues, two beats.
@@ -1098,7 +1098,7 @@ def _followup_id(path, line):
 def maybe_followup(state, force=False):
     """Once daily: find open '#awaiting-reply' tasks whose 📅 chase date has passed,
     escalate them to #attention, and wake Claude ONCE to write ready-to-send
-    follow-up drafts (Atul's voice, style doc) + put a send-task on today's plan."""
+    follow-up drafts (the owner's voice, style doc) + put a send-task on today's plan."""
     today_s = datetime.now().strftime("%Y-%m-%d")
     if state.get("last_followup") == today_s and not force:
         return
@@ -1146,9 +1146,9 @@ def maybe_followup(state, force=False):
         f"person still hasn't responded:\n\n{listing}\n\n"
         f"For EACH stale item:\n"
         f"1. Open the source note (and any linked notes / prior drafts in 40-Drafts, plus "
-        f"People/<name>.md if it exists) to understand who Atul is chasing, about what, and "
+        f"People/<name>.md if it exists) to understand who the owner is chasing, about what, and "
         f"what was last sent.\n"
-        f"2. Read {VAULT}/50-Research/Atul-writing-style.md and write a READY-TO-SEND follow-up "
+        f"2. Read {VAULT}/50-Research/the owner-writing-style.md and write a READY-TO-SEND follow-up "
         f"message in HIS voice to {VAULT}/40-Drafts/{today_s} - Follow-up to <who>.md with "
         f"frontmatter (project, status: awaiting-approval, to: <address/channel if known>). "
         f"Chasing someone senior: use the status-inquiry register from the style doc — "
@@ -1160,7 +1160,7 @@ def maybe_followup(state, force=False):
         f"#<project> #attention 📅 {today_s}\n"
         f"   so it lands on today's plan.\n"
         f"4. Log one line in 30-Daily/{today_s}.md (create if missing).\n"
-        f"NEVER send anything — drafts await Atul's approval."
+        f"NEVER send anything — drafts await the owner's approval."
     )
     try:
         _touch_lock()
@@ -1174,7 +1174,7 @@ def maybe_followup(state, force=False):
         log(f"followup radar failed: {e}")
 
 # ---- REVERSE reconcile: close finished tasks the machinery never ticked off ----
-# (Atul, 7th July- the one-directional-machinery fix. His Y2 results email landed and
+# (the owner, 7th July- the one-directional-machinery fix. His Y2 results email landed and
 #  was filed, yet the "grab Y2 results" task stayed open. The evidence is ALREADY in the
 #  vault as recent notes/logs- match open tasks against it, auto-tick the sure ones, flag
 #  the ambiguous. See 50-Research/Auto-reconcile to-do list - plan of attack.md +
@@ -1207,7 +1207,7 @@ def _open_reconcilable_tasks():
 
 def _recent_vault_evidence(days=4):
     """Completion evidence already sitting in the vault: recent inbox notes (with source),
-    recent daily-log lines, recent drafts, and Atul's own recent WhatsApp lines. Returns a
+    recent daily-log lines, recent drafts, and the owner's own recent WhatsApp lines. Returns a
     single readable text block (capped) for the reconcile judgement."""
     cutoff = datetime.now().timestamp() - days * 86400
     blocks = []
@@ -1264,7 +1264,7 @@ def _recent_vault_evidence(days=4):
                 pass
     if dr_lines:
         blocks.append("RECENT DRAFTS (written but NOT sent unless status: sent):\n" + "\n".join(dr_lines))
-    # Atul's own recent WhatsApp lines (a commitment he then fulfilled- 'sent it', 'done')
+    # the owner's own recent WhatsApp lines (a commitment he then fulfilled- 'sent it', 'done')
     wa_lines = []
     if WA_FEED.exists():
         try:
@@ -1280,12 +1280,12 @@ def _recent_vault_evidence(days=4):
                         continue
                 except Exception:
                     pass
-                if str(r.get("sender", "")).strip().lower().startswith("atul"):
-                    wa_lines.append(f"[{ts[:16]}] Atul: {r.get('text','')[:160]}")
+                if str(r.get("sender", "")).strip().lower().startswith("owner"):
+                    wa_lines.append(f"[{ts[:16]}] the owner: {r.get('text','')[:160]}")
         except Exception:
             pass
     if wa_lines:
-        blocks.append("ATUL'S OWN RECENT WHATSAPP MESSAGES (things he said/did):\n"
+        blocks.append("OWNER'S OWN RECENT WHATSAPP MESSAGES (things he said/did):\n"
                       + "\n".join(wa_lines[-30:]))
     return "\n\n".join(blocks)
 
@@ -1293,7 +1293,7 @@ def maybe_reconcile(state, force=False):
     """REVERSE pass (once daily, routine-class): cross-check open tasks against completion
     evidence already filed in the vault. Auto-tick the sure ones, flag the ambiguous in ONE
     message, leave the rest. Fixes the machinery only capturing incoming items, never closing
-    finished ones (Atul, 7th July)."""
+    finished ones (the owner, 7th July)."""
     today_s = datetime.now().strftime("%Y-%m-%d")
     if state.get("last_reconcile") == today_s and not force:
         return
@@ -1312,7 +1312,7 @@ def maybe_reconcile(state, force=False):
     task_listing = "\n".join(f"- {p} :: {ln}" for p, ln, _ in tasks[:150])
     already_note = ("\nTasks you have ALREADY flagged as ambiguous on a previous pass "
                     "(do NOT flag these again- either they're genuinely still open or "
-                    "waiting on Atul; only auto-tick one if NEW hard evidence now proves "
+                    "waiting on the owner; only auto-tick one if NEW hard evidence now proves "
                     "it done):\n" + "\n".join(f"- {x}" for x in sorted(already)[:40])
                     if already else "")
     prompt = (
@@ -1320,7 +1320,7 @@ def maybe_reconcile(state, force=False):
         f"UK English, no #hashtags in prose, ordinal dates like '7th July', NEVER act outward). "
         f"Today is {today_s}.\n\n"
         f"This is the REVERSE RECONCILE pass. The watcher captures incoming items but never closes "
-        f"a task once the world completes it (Atul's 7th-July complaint: his exam results email "
+        f"a task once the world completes it (the owner's 7th-July complaint: his exam results email "
         f"landed and was filed, yet the 'grab exam results' task stayed open). Your job: decide "
         f"which OPEN tasks below are actually DONE, using the completion evidence already filed in "
         f"the vault.\n\n"
@@ -1448,7 +1448,7 @@ def process_open_queue():
 MINE_SEP = "\n\n===== NEXT CONVERSATION =====\n\n"
 MINE_CHUNK = 150_000        # chars per window (~37K tokens); Opus's 1M window holds it with room to think
 MINE_FANOUT = 3             # chunk extractions in flight at once- bounds wall clock without a spawn storm
-MINE_THREADS = 40           # threads read per project (was 5, which silently dropped 656 of UCL's 661)
+MINE_THREADS = 40           # threads read per project (was 5, which silently dropped 656 of 661)
 
 
 def _mine_chunks(text, size=MINE_CHUNK):
@@ -1540,7 +1540,7 @@ def _mine_extract(key, i, chunk, total, env):
     try: outp.unlink()
     except Exception: pass
     prompt = (
-        f"You are an EXTRACTOR, not a filer. This is window {i + 1} of {total} of Atul's "
+        f"You are an EXTRACTOR, not a filer. This is window {i + 1} of {total} of the owner's "
         f"'{key}' Claude conversation transcript, in the file {inp} - read it.\n\n"
         f"Extract the action items he still needs to do: people to contact, questions to ask, "
         f"things to build / study / decide / send. Be conservative - genuine, still-open to-dos "
@@ -1631,7 +1631,7 @@ def process_mine_queue():
         if not p:
             continue
         sids = [t["sid"] for t in p.get("threads", []) if t.get("sid") and t["sid"] != "NEW"]
-        # A discarded thread is never silent (it was `sids[:5]`, unlogged, and UCL has 661).
+        # A discarded thread is never silent (it was `sids[:5]`, unlogged, with 661 threads).
         if len(sids) > MINE_THREADS:
             log(f"mine: {key} has {len(sids)} threads, reading the {MINE_THREADS} most recent- "
                 f"{len(sids) - MINE_THREADS} not scanned")
@@ -1689,7 +1689,7 @@ def process_mine_queue():
             log(f"mine failed ({key}): merged list unwritable: {e}")
             continue
         prompt = (
-            f"You are Baxter. Read {CONTRACT} and follow it. Atul's OPEN to-dos have been "
+            f"You are Baxter. Read {CONTRACT} and follow it. the owner's OPEN to-dos have been "
             f"extracted from his '{name}' project conversations- the whole transcript, mined in "
             f"{len(chunks)} window(s) and deduped. The {len(tasks)} candidate items are in the JSON "
             f"file {merged} — read it.\n\n"
@@ -1701,7 +1701,7 @@ def process_mine_queue():
             f"only, no fluff. Plain language, no #hashtags in prose. Write exactly ONE note. NEVER send anything."
         )
         # The ping follows the ARTEFACT, never the subprocess returning. On 9th July the
-        # filing claude ran, exited clean, wrote nothing, and Atul was told his tasks had
+        # filing claude ran, exited clean, wrote nothing, and the owner was told his tasks had
         # been pulled. A no-op mine now says so and stays quiet. `t0` is stamped before
         # the spawn so a note this pass wrote outranks one an earlier pass left behind.
         t0 = time.time()
@@ -1727,7 +1727,7 @@ def process_mine_queue():
 
 # ---- mobile reminders: daily due-today/overdue digest to #reminders (deterministic, no claude) ----
 def _bullets(items, n=6):
-    """Atul's hard rule (5th July, third strike): briefs are BULLET LISTS- one task
+    """the owner's hard rule (5th July, third strike): briefs are BULLET LISTS- one task
     per line, short, never ' · '-chained prose. Strips wikilinks to labels, trims
     each line, and counts the overflow instead of silently dropping it."""
     items = list(items)
@@ -1753,7 +1753,7 @@ def _clean_task_text(line):
 def _open_dated_tasks():
     """(due_date, clean_text) for every open task with a 📅 date, across the task folders.
 
-    Rolls overdue dates to today FIRST (Atul, 5th July 12:04). Every brief builder reads
+    Rolls overdue dates to today FIRST (the owner, 5th July 12:04). Every brief builder reads
     tasks through here, so no brief can render a past date even if the pass never reached
     its own roll- `roll_once` memoises, so the repeat calls cost nothing."""
     if _roll:
@@ -1840,7 +1840,7 @@ def maybe_remind(state):
         return
     tasks = _open_dated_tasks()
     td = datetime.now().date()
-    # OVERDUE ROLLS FORWARD (Atul, 5th July 12:04): an overdue task IS due today- never a
+    # OVERDUE ROLLS FORWARD (the owner, 5th July 12:04): an overdue task IS due today- never a
     # separate "slipping" bucket, an "N other overdue items" aggregate, or a "was due 3d
     # ago" shame-stamp. baxter_roll has already rewritten the dates; `d <= td` is the belt
     # in case it couldn't. Every one is named, and reads as due today.
@@ -1860,7 +1860,7 @@ def maybe_remind(state):
         log(f"morning brief sent ({len(due)} on the docket incl. rolled)")
 
 def maybe_pulse(state):
-    """Midday check-UP on Atul (from 13:00): how's the day going, what's still open,
+    """Midday check-UP on the owner (from 13:00): how's the day going, what's still open,
     an easy opening to reshuffle or flag blockers."""
     today = datetime.now().strftime("%Y-%m-%d")
     if state.get("last_pulse") == today or not (13 <= datetime.now().hour < 16):
@@ -2004,7 +2004,7 @@ def _triage_prompt(items):
         if PENDING_Q.exists():
             pq = json.loads(PENDING_Q.read_text(encoding="utf-8-sig"))
             if pq:
-                pending = (f"\n\nPENDING CLARIFYING QUESTIONS you previously asked Atul (in {PENDING_Q}): "
+                pending = (f"\n\nPENDING CLARIFYING QUESTIONS you previously asked the owner (in {PENDING_Q}): "
                            f"{json.dumps(pq, ensure_ascii=False)}. If any ITEM below answers one, apply the "
                            f"answer (update the original note/task it references), then REMOVE that entry "
                            f"from the json file.")
@@ -2014,7 +2014,7 @@ def _triage_prompt(items):
         f"You are Baxter. Read {CONTRACT} and follow it exactly. "
         f"Triage these {len(items)} NEW item(s) into the vault at {VAULT} "
         f"(inbox notes + tasks + drafts + daily log). NEVER send anything outward - the ONE exception "
-        f"is speaking to Atul himself in his own server via: python \"{BAXTER_SAY}\" \"<message>\" "
+        f"is speaking to the owner himself in his own server via: python \"{BAXTER_SAY}\" \"<message>\" "
         f"(use it ONLY per the contract's clarifying-question step).\n\n"
         # The two MACHINE-READABLE invariants, restated. The contract already says both, but it
         # says them among 31 numbered steps, and filing now runs on the grunt tier (Haiku 4.5).
@@ -2024,7 +2024,7 @@ def _triage_prompt(items):
         # spec is what makes a cheap worker a cheaper worker, not a lesser one.
         f"NON-NEGOTIABLE (the dashboard breaks silently without these):\n"
         f"1. EVERY task line you write ends with its project tag- `- [ ] <task> #<project>` "
-        f"(plus #attention only if it genuinely needs Atul now). A task line with no #<project> "
+        f"(plus #attention only if it genuinely needs the owner now). A task line with no #<project> "
         f"tag is invisible to his dashboard. Never omit it.\n"
         f"2. Log ONE line per filed item into 30-Daily/<today>.md (create the file if missing).\n"
         f"3. Genuine compound hyphens stay closed: write `co-op`, `off-peak`, `turn-based`. "
@@ -2036,7 +2036,7 @@ def _triage_prompt(items):
     )
 
 def wake_claude(items):
-    """Dispatch a triage batch to a PARALLEL detached worker (Atul: 'easy things get fast
+    """Dispatch a triage batch to a PARALLEL detached worker (the owner: 'easy things get fast
     responses, hard things take time' - so nothing queues behind an unrelated long run).
     The batch is journaled to disk first; the worker deletes it on success and an orphan
     sweep respawns anything that dies. Falls back to synchronous if too many in flight."""
@@ -2067,7 +2067,7 @@ def wake_claude(items):
 def _worker_run(batch_file):
     """Worker mode: process one journaled batch. The journal is deleted ONLY on a
     claude exit code of 0 - a failed run (usage limit, API error) leaves it in place
-    so sweep_orphan_batches respawns it until it succeeds. (4th-July lesson: Atul's
+    so sweep_orphan_batches respawns it until it succeeds. (4th-July lesson: the owner's
     usage limit ran out and workers silently 'finished' in 3s, eating his messages.)"""
     try:
         items = json.loads(Path(batch_file).read_text(encoding="utf-8-sig"))
@@ -2134,7 +2134,7 @@ def sweep_orphan_batches():
         # (the BELT to reap_dead_lanes' braces. That reaper catches a corpse in ~25s and
         # classifies it; this 30-min sweep exists for the case where the reaper itself is
         # dead. Keep both. A `.parked.json` is a task the troubleshoot loop gave up on and
-        # handed to Atul- respawning it would undo the park.)
+        # handed to the owner- respawning it would undo the park.)
         if RESUME_DIR.exists():
             for rf in RESUME_DIR.glob("*.json"):
                 if rf.name.endswith((".failed.json", ".parked.json")) or now - rf.stat().st_mtime < 1800:
@@ -2150,7 +2150,7 @@ def sweep_orphan_batches():
     except Exception as e:
         log(f"orphan sweep failed: {e}")
 
-# ---- BUILD START/STOP CONFIRMATIONS (Atul, 8th July 23:19 + 23:26) ----
+# ---- BUILD START/STOP CONFIRMATIONS (the owner, 8th July 23:19 + 23:26) ----
 # Builds used to speak because they ran inside a live channel session. Detached resume
 # workers only log() to a file, so both ends went silent. Every build now confirms itself
 # at BOTH ends- start, landing, failure- in #general and the activity-log, naming ITS OWN
@@ -2196,7 +2196,7 @@ def _journal_set(rf, **kv):
         log(f"journal flag write failed on {Path(rf).name}: {e}")
 
 def _lane_no(lane):
-    """Lanes read as 1 and 2 on every surface (Atul, 9th July); internals stay 0-indexed.
+    """Lanes read as 1 and 2 on every surface (the owner, 9th July); internals stay 0-indexed.
     Mirrors _gov.lane_label, but survives a governor that failed to import- an announcement
     must never die for want of a lane number."""
     if _gov is not None:
@@ -2261,7 +2261,7 @@ def _announce_stop(rf, entry, ok, err="", verdict="", detail=""):
     (via `--announce`), and a derived fallback beats silence when it forgets.
 
     A landing NEVER claims more than the verify gate proved. `unverified` is said out
-    loud rather than dressed up as done- Atul's own carve-out: say so plainly rather
+    loud rather than dressed up as done- the owner's own carve-out: say so plainly rather
     than implying it is proven."""
     rf = Path(rf)
     entry = _read_journal(rf) or entry
@@ -2291,7 +2291,7 @@ def _announce_stop(rf, entry, ok, err="", verdict="", detail=""):
         _announce_build(line, f"Build landed ({verdict or 'unverified'})- {label}")
     _journal_set(rf, announced=rf.name)
 
-# ---- THE VERIFY + TROUBLESHOOT LOOP (Atul, 9th July 01:37- the overnight order) ----
+# ---- THE VERIFY + TROUBLESHOOT LOOP (the owner, 9th July 01:37- the overnight order) ----
 # "automatically checking and confirming all your work where possible then auto trouble
 # shoot failures and pass successes." Before this, a lane reported done because the worker
 # SAID done, a failure was re-queued blind and unchanged, and a success passed nothing on.
@@ -2341,7 +2341,7 @@ def _record_check(rf, kind, value):
         vetted, why = _bv.vet_verify_cmd(value, paths_must_exist=True)
         if vetted is None:
             # Into the VERIFIER's own log, never `.baxter.log`- that one is the build record
-            # Atul reads, and a refusal is a gate decision, filed beside every other one.
+            # the owner reads, and a refusal is a gate decision, filed beside every other one.
             _bv._log(f"REFUSED a verify command on {Path(rf).name}- {why}: "
                      f"{' '.join(value.split())[:120]}")
             return (f"REFUSED- your verify command was NOT recorded: {why}\n"
@@ -2687,7 +2687,7 @@ def _verify_gate(rf, entry):
             if _gov is not None:
                 try:
                     # The guard keeps its own log, and a collision hold belongs beside every
-                    # other thing it has held back. Atul reads it back with `--rejects`.
+                    # other thing it has held back. the owner reads it back with `--rejects`.
                     _gov.record_reject(entry.get("task", ""),
                                        f"verify collided with '{otask[:60]}'- {why}",
                                        lane=entry.get("lane"), kind="collide")
@@ -2719,7 +2719,7 @@ def _verify_gate(rf, entry):
 
 def _park(rf, entry, diagnosis, why=""):
     """A task the loop cannot fix. It ANNOUNCES itself- overnight, a silently parked queue
-    looks identical to a drained one in the morning- and re-enters the queue gated on Atul
+    looks identical to a drained one in the morning- and re-enters the queue gated on the owner
     with its diagnosis, so `--ungate` is all it takes to run it again once he has looked."""
     rf, label = Path(rf), _build_label(entry)
     if _bv:
@@ -2733,7 +2733,7 @@ def _park(rf, entry, diagnosis, why=""):
                          entry.get("note_path", ""),
                          state_summary=f"PARKED by the verify loop- {diagnosis}. {why}".strip(),
                          priority=getattr(_gov, "PRIO_RESUME", 2),
-                         touch_set=entry.get("touch_set") or None, gated_on="atul",
+                         touch_set=entry.get("touch_set") or None, gated_on="owner",
                          verify=entry.get("verify"), verify_assert=entry.get("verify_assert"),
                          vet=False)
         except Exception as e:
@@ -2998,19 +2998,19 @@ def _handle_failure(rf, entry, rc, log_text, source="worker"):
         _park(rf, entry, f"{kind}- {why}", rationale)
         return
     # A failure the loop is still HEALING is machinery, not news, and it does not reach him
-    # (Atul, 9th July: "autonomous root-cause troubleshooting... before ever flagging a build
-    # failure to Atul"). It lands in .baxter.log and the outcome ledger instead- both already
+    # (the owner, 9th July: "autonomous root-cause troubleshooting... before ever flagging a build
+    # failure to the owner"). It lands in .baxter.log and the outcome ledger instead- both already
     # written above. The announce is not deleted, it is DEFERRED: _park() below still speaks
     # up the moment the cap is spent or the task is gated, and a landing still announces. So
     # there is no silent failure state, only a bounded silent one- MAX_REPAIRS attempts long.
     if action == "retry":
-        log(f"{label}: {kind}- retrying once, unchanged. Self-healing, not flagged to Atul.")
+        log(f"{label}: {kind}- retrying once, unchanged. Self-healing, not flagged to the owner.")
         _journal_set(rf, transient_retries=int(entry.get("transient_retries", 0) or 0) + 1)
         suffix = ".retry.json"
     else:
         attempt = int(entry.get("repair_attempts", 0) or 0) + 1
         log(f"{label}: repair attempt {attempt} of {_bv.MAX_REPAIRS}- {why}. "
-            f"Self-healing, not flagged to Atul.")
+            f"Self-healing, not flagged to the owner.")
         _journal_set(rf, repair_attempts=attempt, repair_pending=True)
         suffix = ".repair.json"
     try:
@@ -3122,7 +3122,7 @@ def _spin_dump_note():
 
 
 def stuck_doctor_tick(dry_run=False, force=False, deadline=_STUCK_DEADLINE, probe_cmd=None):
-    """LEG 4 (Atul, 8th July 21:38). A lane past 15 min that has burned no cpu and rewritten
+    """LEG 4 (the owner, 8th July 21:38). A lane past 15 min that has burned no cpu and rewritten
     nothing for a full 10-minute sample is wedged- and only then is baxter_doctor_ai summoned,
     once, detached.
 
@@ -3271,10 +3271,10 @@ def _scope_prompt(rf, entry, lane):
         + (f' --note "{note}"' if note else "")
         + f' --touch "file_a,file_b/region"   (use --solo instead only if it genuinely rewrites a whole hub)\n'
         f"2. If the task cannot be turned into a file-list because it needs a DESIGN first "
-        f"(a new feature, a UI, an architecture), say so to Atul in one line via "
+        f"(a new feature, a UI, an architecture), say so to the owner in one line via "
         f'python "{BAXTER_SAY}" "<message>" and re-queue it for the PM instead '
         f'(python "{USAGE_PY}" --halt "{task}" "{nxt or "needs a PRD"}" --gate pm).\n'
-        f"3. If reading shows the task is already done or moot, say that to Atul and do NOT re-queue.\n\n"
+        f"3. If reading shows the task is already done or moot, say that to the owner and do NOT re-queue.\n\n"
         f"Do NOT build. Do NOT edit. One scoping read, one hand-off, then exit."
     )
 
@@ -3284,7 +3284,7 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
 
     It used to be a 70-line f-string buried inside `_resume_worker`, which meant no guard
     could see it and no test could render it. So it was the one worker prompt in Baxter that
-    imported no rules and carried none- and TRUST BUT VERIFY, the rule Atul gave at 00:17 on
+    imported no rules and carried none- and TRUST BUT VERIFY, the rule the owner gave at 00:17 on
     9th July, reached every lane EXCEPT the lane that builds. It types no rule text of its
     own now: `_rules.VERIFY_STEP` is interpolated, exactly as baxter_fast and baxter_slash
     interpolate WORKER_RULES.
@@ -3322,10 +3322,10 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
         )
         head = (
             f"You are Baxter. Read {CONTRACT} and follow it. A build FAILED and you are the "
-            f"diagnose-and-repair worker sent after it, unprompted- do not wait for Atul. Do "
+            f"diagnose-and-repair worker sent after it, unprompted- do not wait for the owner. Do "
             f"NOT start the task afresh: find what actually broke, fix THAT, then finish the "
             f"build. {cap_line}\n\n"
-            f"Atul has NOT been told this build failed, and will not be while you are on it. "
+            f"the owner has NOT been told this build failed, and will not be while you are on it. "
             f"The loop self-heals silently; only a spent cap reaches him. Fix it properly- do "
             f"not paper over it, and never soften a check to make it pass.\n\n"
             f"THE FAILURE:\n"
@@ -3343,14 +3343,14 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
         head = (
             f"You are Baxter. Read {CONTRACT} and follow it. A build lane is free and the "
             f"usage curve open- this queued task now RUNS (resumes if partly done), unprompted- "
-            f"do not wait for Atul.\n\n"
+            f"do not wait for the owner.\n\n"
         )
     # the plan + the sealed acceptance, when a planner produced one (empty string if not)
     try:
         _plan = _orch.plan_block(entry) if _orch is not None else ""
     except Exception:
         _plan = ""
-    # ANSWER WHERE HE ASKED (Atul, 9th July 17:38, on a build that answered in the wrong room).
+    # ANSWER WHERE HE ASKED (the owner, 9th July 17:38, on a build that answered in the wrong room).
     # This prompt used to call rules.reply_via() nowhere at all, so a finished build had no
     # reply command in front of it and reached for baxter_say's bare default- which is
     # channel_key='general'. He asked the bullet-resist question in #deadlock-research at 15:37
@@ -3364,7 +3364,7 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
     _mid = str(entry.get("source_mid") or "").strip()
     _cid = str(entry.get("source_channel") or "").strip()
     reply_line = (
-        "- ANSWER WHERE HE ASKED. This build came from a message of Atul's, in the channel "
+        "- ANSWER WHERE HE ASKED. This build came from a message of the owner's, in the channel "
         "named below. Reply to THAT message, in THAT channel- not in #general, and not as a "
         "bare post. Your landing announcement is separate and does not answer him.\n"
         "    " + _rules.reply_via(_mid, _cid or None) + "\n"
@@ -3392,7 +3392,7 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
         f"- Never start a second build/research/setup yourself. New big work you discover goes "
         f"into the queue, not into flight- and DECLARE ITS TOUCH-SET so it can share a lane:\n"
         f"  python \"{USAGE_PY}\" --queue \"<task>\" \"<first step>\" [--note <path>] [--priority 1-8] --touch \"utils/baxter_usage.py/ceiling,utils/coc_bot/,@probe\"\n"
-        f"  (1 = Atul-says-first, 2 = interrupted resumes, 5 = default, 8 = background). The "
+        f"  (1 = the owner-says-first, 2 = interrupted resumes, 5 = default, 8 = background). The "
         f"touch-set is MANDATORY: --queue REFUSES an undeclared task (exit 2). Name the REAL "
         f"files this task will edit- the literal '@cluster'/'utils/x.py' placeholders are "
         f"refused too, since a fake declaration gets co-scheduled and then collides. The @tag "
@@ -3446,7 +3446,7 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
         f"below it. The same rule binds any Agent sub-agent you spawn by hand.\n"
         f"- On completion: mark the build's '- [ ]' task done in the vault and add one terse "
         f"line to the Workshop activity-log per the contract (no vault paths, no mention).\n"
-        f"- ANNOUNCE YOUR LANDING (Atul, 8th July- he wants a confirmation at BOTH ends of every "
+        f"- ANNOUNCE YOUR LANDING (the owner, 8th July- he wants a confirmation at BOTH ends of every "
         f"build). Your START was already posted to #general for you. Before you exit, write your "
         f"one-line landing message into your journal- it is posted the moment your lane retires:\n"
         f"    python \"{os.path.abspath(__file__)}\" --announce \"{rf}\" \"<one clean line, his register, what is now live>\"\n"
@@ -3454,7 +3454,7 @@ def build_worker_prompt(rf="<your journal>", entry=None, lane=1, touch=None, rep
         f"transition.' Skip it and a generic line goes out in its place. If you HALT instead of "
         f"finishing, don't write one- the pause announces itself.\n"
         + reply_line
-        + f"- NEVER message anyone but Atul; no outward action ever.\n\n"
+        + f"- NEVER message anyone but the owner; no outward action ever.\n\n"
         f"{_rules.voice()}"
     )
 
@@ -3535,14 +3535,14 @@ def _resume_worker(rfile):
             entry = _orch.ensure_plan(rf, entry) or entry
         except Exception as e:
             log(f"planner tier failed on {rf.name} ({e})- the lane proceeds unplanned")
-    # SCOPE-ONLY LANE (Atul, 10th July: "a read only touch set... forced to read only, no edit...
+    # SCOPE-ONLY LANE (the owner, 10th July: "a read only touch set... forced to read only, no edit...
     # then this naturally allows for whatever needs to be done next... so it becomes autonomous").
     # An entry with no declared touch-set and not --solo runs read-only first: it reads the code
     # to find what a build WOULD touch. clash() already flows it onto this lane in parallel with
     # everything (it edits nothing, so it conflicts with nothing). BAXTER_SCOPE_ONLY makes that
     # MECHANICAL- the PreToolUse writer hook denies every Edit/Write while it is set. The pass
     # reads, then acts on its own: re-queues as a scoped build (--halt with a touch-set), or tells
-    # Atul it needs a design. Set on THIS worker process; the claude call below inherits os.environ.
+    # the owner it needs a design. Set on THIS worker process; the claude call below inherits os.environ.
     scope_only = not ((entry.get("touch_set") or []) or entry.get("solo"))
     if scope_only:
         os.environ["BAXTER_SCOPE_ONLY"] = "1"
@@ -3550,7 +3550,7 @@ def _resume_worker(rfile):
     else:
         os.environ.pop("BAXTER_SCOPE_ONLY", None)
         prompt = build_worker_prompt(rf=rf, entry=entry,
-                                     lane=_lane_no(entry.get("lane", 0)),   # builders speak Atul's
+                                     lane=_lane_no(entry.get("lane", 0)),   # builders speak the owner's
                                      touch=entry.get("touch_set") or [],    # numbering too: 1..10
                                      repair=bool(entry.get("repair_pending")))
     try:
@@ -3640,7 +3640,7 @@ def maybe_resume(state, force=False):
         except Exception as e:
             log(f"retry-counter reset failed: {e}")
     # ---- the big-task pump: LANE_COUNT clash-checked lanes, top of the queue down ----
-    # (8th July, Atul 22:09: concurrent builds to halve the drain, with a delegator keeping
+    # (8th July, the owner 22:09: concurrent builds to halve the drain, with a delegator keeping
     # the lanes off conflicting or near-adjacent work; four lanes since 9th July.) Every
     # rejection here- clash or human gate- is mirrored into the guard's own log, so "has the
     # guard ever rejected anything?" is one command (`--rejects`) and not a grep. A lane opens only when
@@ -3727,11 +3727,11 @@ def maybe_resume(state, force=False):
         except Exception:
             pass
     state["last_resume_try"] = datetime.now().isoformat()
-    # HUMAN-GATED tasks never auto-pump. A task waiting on Atul's explicit 'go' or a
+    # HUMAN-GATED tasks never auto-pump. A task waiting on the owner's explicit 'go' or a
     # pending human answer (NOT the usage curve) must not be journaled into a lane-
     # the pump would just slam the gate every window and force a hold-and-re-park loop
     # (the email-hygiene cull, runs 4-6, 5th-6th July: outward unsub + destructive bin,
-    # money/legal-flagged, never fires unprompted). These wait in the queue until Atul's
+    # money/legal-flagged, never fires unprompted). These wait in the queue until the owner's
     # live 'go' (`--ungate`), which arrives as a channel command, not the pump.
     # The gate is the explicit `gated_on` FIELD, set at queue time- never inferred from
     # the task's prose. Reading the prose meant any task that so much as DESCRIBED being
@@ -3750,7 +3750,7 @@ def maybe_resume(state, force=False):
             runnable.append(e)
     if not runnable:
         _pump_line()
-        return   # only human-gated tasks left- nothing for the pump; they await Atul's go
+        return   # only human-gated tasks left- nothing for the pump; they await the owner's go
     # an unreadable journal (entry None) has no known touch-set, so it clashes with
     # everything and holds the second lane shut- exactly the safe default
     live_sets = [_gov.touch_of(e or {}) for _rf, e in lanes]
@@ -3810,10 +3810,10 @@ def maybe_resume(state, force=False):
     for rf, head in started:
         _spawn_resume(rf)   # if the spawn dies, the journal is on disk- the sweep respawns it
         log(f"build lane {_lane_no(head['lane'])} (idx {head['lane']}): started '{str(head.get('task', '?'))[:60]}' ({len(rest)} queued behind)")
-        # A FLEET LOCK MUST NEVER BE SILENT (Atul, 9th July- "only lane 1 functional").
+        # A FLEET LOCK MUST NEVER BE SILENT (the owner, 9th July- "only lane 1 functional").
         # But ONLY a genuine --solo build locks the fleet now (10th July): an empty touch-set is
         # a READ-ONLY scoping pass that clashes with nothing and holds no lane shut, so warning on
-        # it spammed Atul about locks that were not happening. Warn only when `solo` is truly set.
+        # it spammed the owner about locks that were not happening. Warn only when `solo` is truly set.
         if head.get("solo"):
             n = _lane_no(head["lane"])
             log(f"FLEET LOCK: lane {n} started a --solo build- it holds the other "
@@ -3829,7 +3829,7 @@ def maybe_resume(state, force=False):
         behind = f" ({len(rest)} queued)" if rest else ""
         _say(f"✅ Usage {'reset' if rolled else 'clear'}- resuming builds, {n} running{behind}.")
 
-# ---- THE QUEUE-ACK RECONCILER (Atul, 9th July 09:38) --------------------------------
+# ---- THE QUEUE-ACK RECONCILER (the owner, 9th July 09:38) --------------------------------
 # The last line of his order: "for every fast-lane reply carrying the queued phrase, assert
 # a queue entry references that message_id, and ping if not."
 #
@@ -3849,7 +3849,7 @@ FAST_HANDLED = VAULT / ".baxter_fast_handled.json"
 ACK_PINGED = VAULT / ".baxter_queue_ack_pinged.json"
 # The moment receipts began. A reply sent BEFORE the fast lane started writing placeholders
 # can have no receipt, so the check does not apply to it- judging those would flag the whole
-# of this morning. Not a fudge: two of the sends it would flag (09:21) are the ones Atul
+# of this morning. Not a fudge: two of the sends it would flag (09:21) are the ones the owner
 # caught himself, and a third (10:38, the top-hat role icon) was queued minutes later by
 # triage under different prose. All three were true by luck, which is the fault, not the lie.
 # He has already been told. The reconciler's job is the NEXT one.
@@ -3866,7 +3866,7 @@ QUEUE_CLAIM_TEXT = re.compile(r"\bqueu(?:ed|ing|eing)\b", re.I)
 # the priority, the depth.
 #
 # The tail is deliberately unanchored. 22 live lines read `queued (p6, 21 deep, gated on
-# atul)`, and a regex demanding `)` straight after the depth drops every one of them- deleting
+# owner)`, and a regex demanding `)` straight after the depth drops every one of them- deleting
 # the very evidence an honest gated claim is cleared by. Only a FRESH row carries a depth:
 # refining an entry in place does not change how deep the queue is, so 299 of the 702 live
 # lines yield `depth=None`. That is the common case, not the corrupt one.
@@ -3978,7 +3978,7 @@ ACK_WINDOW = 300.0
 
 
 def queue_ack_violations(sends, fast_handled, receipts, queue, epoch=0.0, window=ACK_WINDOW):
-    """Message ids the fast lane told Atul were queued, with no entry behind them. PURE.
+    """Message ids the fast lane told the owner were queued, with no entry behind them. PURE.
 
     Scoped to replies the FAST LANE handled: a reply from another lane may legitimately
     have queued fresh work of its own, unrelated to the message it answers, and pinging him
@@ -4092,7 +4092,7 @@ def queue_ack_audit(ping=True):
         return bad          # every violation already logged + pinged once; the log is a
                             # record of distinct holes, not a per-pass drumbeat
     for mid in fresh:
-        log(f"QUEUE-ACK VIOLATION: told Atul {mid} was queued; no entry carries that message id")
+        log(f"QUEUE-ACK VIOLATION: told the owner {mid} was queued; no entry carries that message id")
         if _gov:
             try:
                 _gov.record_reject(f"reply to message {mid}",
@@ -4100,11 +4100,11 @@ def queue_ack_audit(ping=True):
                                    kind="queue-ack")
             except Exception:
                 pass
-    # THE STANDING ORDER (Atul, 9th July). An ack that ran ahead of its write is MEAGER: it
+    # THE STANDING ORDER (the owner, 9th July). An ack that ran ahead of its write is MEAGER: it
     # is already logged, already in the rejects log, and the repair- closing the hole between
     # the pre-announce guard and the prompt rule it enforces- is code that
     # baxter_queue_ack_selftest proves. Baxter queues that build itself rather than telling
-    # Atul about a hole he cannot fix. He hears only if no repair could be queued.
+    # the owner about a hole he cannot fix. He hears only if no repair could be queued.
     _u = str(Path(__file__).resolve().parent)
     _repaired = False
     try:
@@ -4113,7 +4113,7 @@ def queue_ack_audit(ping=True):
             kind="queue-ack-violation",
             # STABLE across passes: the offending message ids ride in `signature`, never the
             # key. Keyed on the ids, every pass with a new violation would fork a fresh build.
-            task=("Repair queue-ack violation: a worker told Atul something was queued with "
+            task=("Repair queue-ack violation: a worker told the owner something was queued with "
                   "no queue entry behind it"),
             next_step=("Read the offending message ids from .baxter_rejects.jsonl, then close "
                        "the gap between baxter_preannounce_guard and the rule it enforces"),
@@ -4138,7 +4138,7 @@ def queue_ack_audit(ping=True):
 RESURRECT_GAP = 900      # >15 min since the last proactive pass = the process was down/asleep -> a crash resurrection
 RESURRECT_COOLDOWN = 900  # don't re-run the end-stage within 15 min (one sweep per resurrection, not a loop)
 def maybe_resurrection_audit(state):
-    """RESURRECTION REPLY-AUDIT END-STAGE (Atul, 8th July- queued build).
+    """RESURRECTION REPLY-AUDIT END-STAGE (the owner, 8th July- queued build).
     Fires the fixed-order end-stage- confirm vitals -> answer every tickless (no genuine
     native reply) message -> reconcile emoji LAST- after ANY resurrection:
       - /off -> /on           (the .baxter_catchup breadcrumb, dropped by /on)
@@ -4200,7 +4200,7 @@ def maybe_exam_sweep(state):
     So a bounded slice of `utils/*_exam.py` is swept every hour. A red is confirmed on a second
     sweep (a sibling lane mid-edit reddens a bystander; the guild endpoint 429s) and then queues
     its own repair through baxter_autobuild, carrying the exam that caught it as the repair's
-    acceptance. Meager by autobuild's grading: Atul never hears about it.
+    acceptance. Meager by autobuild's grading: the owner never hears about it.
 
     DETACHED, like the resurrection audit. A sweep runs real exams in real subprocesses and can
     take minutes; the watcher blocks on this triage child, and the stale-lock reaper is watching
@@ -4237,7 +4237,7 @@ def maybe_fallback_repair(state, ps1=None):
     landed import did it again. The repair now happens here, in place, through the hub fence:
     machine work, not a build.
 
-    Nothing queues a worker any more, so an unrepairable drift has nowhere left to go but Atul.
+    Nothing queues a worker any more, so an unrepairable drift has nowhere left to go but the owner.
     A write_fallback that raises (WalkError, an unyielding HubConflict, OSError) or that leaves
     check_fallback still non-zero is a fault NOBODY is fixing, and it says so- once per distinct
     signature per hour. Silence here means the array is right, never that the fault was swallowed.
@@ -4308,7 +4308,7 @@ def _touch_lock():
         pass
 def run():
     # AD-HOC REMINDERS FIRE FIRST (8th July- his 'ping me in 10 mins' that never came).
-    # Deliberately above BOTH the single-flight lock and the OFF switch: a reminder Atul
+    # Deliberately above BOTH the single-flight lock and the OFF switch: a reminder the owner
     # explicitly asked for is a promise he's counting on, not proactive machinery, and a
     # long triage cycle holding the lock must never swallow it. Deterministic, no claude.
     # The store's own lock makes this safe alongside the watcher's 15s --fire spawn.
@@ -4329,7 +4329,7 @@ def run():
     except Exception:
         pass
     try:
-        # master OFF switch (Atul's /off): soft-pause. Skip ALL proactive work- briefs,
+        # master OFF switch (the owner's /off): soft-pause. Skip ALL proactive work- briefs,
         # pings, filing, queue pump, auto-resume. The fast lane runs in its own process and
         # ignores this flag, so /on and his live questions still land. /on removes the flag.
         if OFF_FLAG.exists():
@@ -4388,7 +4388,7 @@ def run():
         # sleep gap- confirm vitals, answer any tickless (unreplied) message, reconcile emoji
         # LAST. Runs BEFORE the CATCHUP backfill block (which consumes the /on breadcrumb).
         maybe_resurrection_audit(state)
-        # Backfill report (Atul's v2 ON ask): the first pass after a pause tells him what
+        # Backfill report (the owner's v2 ON ask): the first pass after a pause tells him what
         # landed while off, ONCE- not a brief-storm, not a silent drain. Skipped briefs
         # aren't re-fired (they're time-gated), so the only catch-up owed is the new items.
         if CATCHUP.exists():
@@ -4398,7 +4398,7 @@ def run():
                 CATCHUP.unlink()
             except Exception:
                 pass
-        # WhatsApp bridge logged out -> ping Atul once a day until he re-links
+        # WhatsApp bridge logged out -> ping the owner once a day until he re-links
         relink = VAULT / ".baxter_wa_needs_relink.txt"
         if relink.exists() and state.get("last_wa_relink_ping") != datetime.now().strftime("%Y-%m-%d"):
             _say("📵 Sir- WhatsApp has unlinked the bridge (they expire every few weeks). "
@@ -4496,7 +4496,7 @@ def selftest_verify_collide():
     subprocess, and a timer racing it retires the owner before the gate has looked at it.
 
     Every outward path is stubbed- the ledger, the rejects log and `.baxter.log` all land in
-    lists. A selftest that can write into the build record Atul reads is one that will."""
+    lists. A selftest that can write into the build record the owner reads is one that will."""
     import tempfile, shutil, threading
     global RESUME_DIR, log, _orch, _reload_bv, _reload_orch, COLLIDE_WAIT_S, COLLIDE_POLL_S
     keep = (RESUME_DIR, _gov.RESUME_DIR, _bv.record, _gov.record_reject, log, _orch,
@@ -4651,7 +4651,7 @@ def selftest_verify_collide():
 
         # 6. AN OWNER THAT NEVER RETIRES. The wait is bounded; the red verdict stands. A gate
         #    that hung here would hold a lane for ever, and one that went green would land a
-        #    broken build on Atul's estate.
+        #    broken build on the owner's estate.
         COLLIDE_WAIT_S = 2
         exam(1)
         s = sibling(OWNED)
@@ -4707,12 +4707,12 @@ def selftest_lanes():
     # EVERY outward path is stubbed, not just the ones a test means to touch. The first run
     # of this selftest posted a false "usage reset" line into #general, because maybe_resume
     # reaches _say directly and only _announce_build had been captured. A test that can speak
-    # to Atul is a test that will.
+    # to the owner is a test that will.
     _say = lambda msg, channel="reminders", mention=True: said.append(f"[say] {msg}")
     # ...and a test that can WRITE is a test that will. Leg 10 drives the real maybe_resume,
     # which logs a start line- so `.baxter.log` collected four phantom "started 'next in line'
     # (0 queued behind)" entries at 03:17-03:20 on 9th July, and six more this morning, every
-    # one of them a lane that never existed. The log is a record Atul reads back; a selftest
+    # one of them a lane that never existed. The log is a record the owner reads back; a selftest
     # writing invented history into it is the same class of bug as posting to his channel.
     # The reject log is the second such file, and it is stubbed here before it can grow one.
     log = lambda msg: logged.append(str(msg))
@@ -4739,7 +4739,7 @@ def selftest_lanes():
         reap_dead_lanes()
         assert spawned == ["resume-20260709-000000-000001-0.retry.json"], spawned
         assert any("retrying once" in l for l in logged), logged
-        assert said == [], f"a self-healing retry must not reach Atul, got {said}"
+        assert said == [], f"a self-healing retry must not reach the owner, got {said}"
         assert not rf.exists(), "the corpse journal must have been renamed, not left in place"
 
         # 2. A LIVE build with a dead heartbeat thread is NOT a corpse. Reaping it would
@@ -4758,7 +4758,7 @@ def selftest_lanes():
                         "Sandbox disabled: sandbox is enabled but windows is not supported\n")
         assert spawned == ["resume-20260709-000000-000003-0.retry.json"], spawned
         assert any("retrying once" in l for l in logged), logged
-        assert said == [], f"a self-healing retry must not reach Atul, got {said}"
+        assert said == [], f"a self-healing retry must not reach the owner, got {said}"
 
         # 4. A REAL traceback is deterministic: a repair worker, not a blind retry. And the
         #    repair is SILENT- he is told nothing while the loop is still healing it (his
@@ -4768,7 +4768,7 @@ def selftest_lanes():
         _handle_failure(rf, json.loads(rf.read_text()), 1,
                         "Traceback (most recent call last):\nModuleNotFoundError: no module named x\n")
         assert spawned == ["resume-20260709-000000-000004-0.repair.json"], spawned
-        assert said == [], f"a self-healing repair must not reach Atul, got {said}"
+        assert said == [], f"a self-healing repair must not reach the owner, got {said}"
         assert any("repair attempt 1 of 3" in l for l in logged), logged
         nb = RESUME_DIR / spawned[0]
         assert json.loads(nb.read_text())["repair_pending"] is True, "the repair worker must know it is one"
@@ -4798,15 +4798,15 @@ def selftest_lanes():
         assert json.loads((RESUME_DIR / spawned[0]).read_text())["repair_attempts"] == 3
 
         # 6b. THE CAP SPENT. The third repair failed too -> PARK, announce it OUT LOUD, and
-        #     re-queue gated on Atul. This is the ONLY thing that breaks the silence, and it
+        #     re-queue gated on the owner. This is the ONLY thing that breaks the silence, and it
         #     must never be quiet: overnight, a silently parked queue looks like a drained one.
         said.clear(); spawned.clear()
         rf = journal("resume-20260709-000000-000018-0.json", repair_attempts=3)
         _handle_failure(rf, json.loads(rf.read_text()), 1, "Traceback (most recent call last):\n")
         assert spawned == [], "a parked task must never be respawned"
         assert any(s.startswith("Parked ") and "Say go" in s for s in said), \
-            f"a spent cap MUST reach Atul- silence here is the silent failure state: {said}"
-        assert queued and queued[-1].get("gated_on") == "atul", queued
+            f"a spent cap MUST reach the owner- silence here is the silent failure state: {said}"
+        assert queued and queued[-1].get("gated_on") == "owner", queued
         parked = RESUME_DIR / "resume-20260709-000000-000018-0.parked.json"
         assert parked.exists(), "the parked journal must be renamed out of the lanes"
         seen = [rf for rf, _e in _gov.lane_journals() + _gov.dead_lanes()]
@@ -4819,9 +4819,9 @@ def selftest_lanes():
 
         # 8. A HUMAN-GATED task is never auto-repaired, whatever its log says. It parks on
         #    attempt ZERO and speaks up at once- the silent self-heal must never swallow work
-        #    that is waiting on Atul, no matter how repairable the failure looks.
+        #    that is waiting on the owner, no matter how repairable the failure looks.
         said.clear(); spawned.clear(); queued.clear(); logged.clear()
-        rf = journal("resume-20260709-000000-000009-0.json", gated_on="atul")
+        rf = journal("resume-20260709-000000-000009-0.json", gated_on="owner")
         _handle_failure(rf, json.loads(rf.read_text()), 1, "Traceback (most recent call last):\n")
         assert spawned == [] and any(s.startswith("Parked ") for s in said), (spawned, said)
         assert not any("repair attempt" in l for l in logged), \
@@ -5016,7 +5016,7 @@ def selftest_lanes():
         assert "SEALED" in blk and "not yours to soften" in blk, blk
 
         # 16. THE WHOLE LANE, END TO END- because the legs above test functions, and what
-        #     serves Atul is `_resume_worker`. Drive the real one with the claude spawn
+        #     serves the owner is `_resume_worker`. Drive the real one with the claude spawn
         #     stubbed: the planner must seal BEFORE the executor is called, the executor's
         #     prompt must carry the plan and the seal, and the gate must run the sealed exam
         #     on the way out. (On 9th July a file-level check passed green while the running
@@ -5063,7 +5063,7 @@ def selftest_lanes():
         finally:
             _pump_now, subprocess.run, _orch.make_plan, _gov.blocked = keep2
 
-        # 17. NOTHING THIS TEST DID REACHED A FILE ATUL READS. Legs 10 and 16 drive the real
+        # 17. NOTHING THIS TEST DID REACHED A FILE OWNER READS. Legs 10 and 16 drive the real
         #     maybe_resume/_resume_worker, which log a start line each- and those lines went
         #     into `.baxter.log` as history of builds that never ran. Prove the capture holds:
         #     the fake start is in `logged`, and none of this test's fiction is in the log.
@@ -5085,7 +5085,7 @@ def selftest_lanes():
                 return f.read().decode("utf-8", "replace")
 
         FICTION = ("next in line", "resume-20260709-000000-", "Build the thing")
-        for path, before, what in ((LOG, log_size_before, "a phantom build into the log Atul reads back"),
+        for path, before, what in ((LOG, log_size_before, "a phantom build into the log the owner reads back"),
                                    (_gov.REJECT_LOG, rej_size_before, "an invented rejection into the guard's log")):
             leaked = [ln for ln in _appended(path, before).splitlines()
                       if any(m in ln for m in FICTION)]
@@ -5221,7 +5221,7 @@ def selftest_lanes():
         print("lane loop selftest OK: a dead pid frees its lane at once, a live one is never "
               "reaped, the benign sandbox line is never a cause, a traceback earns a repair "
               "worker, a failing check overrules a claimed success, three repairs self-heal "
-              "in silence and the fourth parks it out loud behind Atul's gate, gated work "
+              "in silence and the fourth parks it out loud behind the owner's gate, gated work "
               "parks without spending an attempt, the sweep leaves the park alone, a builder "
               "handed a sealed exam can strengthen it but never soften it, a real lane run "
               "plans, seals, executes and verifies in that order- and none of it left a mark "
@@ -5236,7 +5236,7 @@ def selftest():
     # acceptance gate runs `--selftest`, so this dropped a "SELFTEST demo item" note into
     # 00-Inbox on every build- 15 of them by lunchtime on 9th July, each carrying a
     # `- [ ] delete this selftest note` onto the task list that is supposed to hold only
-    # what ATUL must do. A test that leaves work on his desk is not a passing test.
+    # what OWNER must do. A test that leaves work on his desk is not a passing test.
     import shutil, tempfile
     global INBOX
     real_inbox, tmp = INBOX, Path(tempfile.mkdtemp(prefix="baxter-selftest-"))
@@ -5292,7 +5292,7 @@ def selftest():
         body = note.read_text(encoding="utf-8")
         assert note.exists() and "source: selftest" in body, "the note write pipeline is broken"
         assert not list(real_inbox.glob("* - SELFTEST demo item.md")), \
-            "a selftest left a demo note in the inbox Atul reads"
+            "a selftest left a demo note in the inbox the owner reads"
         print(f"wrote {note.name} (temp inbox- his own is left alone)")
         INBOX = real_inbox
         # THE BUILD PROMPT'S RED-PROOF FENCE RULE (10th July). baxter_rules.check()
@@ -5321,7 +5321,7 @@ def selftest():
         live[0] = False
         problems = []
         if touched:
-            problems.append("wrote into the inbox Atul reads: " + ", ".join(sorted(touched)))
+            problems.append("wrote into the inbox the owner reads: " + ", ".join(sorted(touched)))
         if tmp.exists():
             problems.append(f"left its temp inbox behind at {tmp}")
         after = {p.name for p in real_inbox.iterdir()} if real_inbox.is_dir() else set()
@@ -5341,7 +5341,7 @@ def selftest():
 def capture(text):
     """Quick-capture a thought (from the hotkey) straight through triage."""
     item = [{"id": "cap-" + datetime.now().strftime("%H%M%S"), "source": "quickcapture",
-             "from": "Atul", "subject": "quick capture", "received": "", "body": text}]
+             "from": "the owner", "subject": "quick capture", "received": "", "body": text}]
     log(f"quick-capture: {text[:60]}")
     wake_claude(item)
     notify("🎩 Baxter", "Captured & filing your note.")

@@ -3,7 +3,7 @@ r"""baxter_coop - Baxter's coop-v2 fan-out (the MD gathering the analysts' work)
 Baxter (MD) hands a SELF-CONTAINED brief (+ optional context) to BOTH analysts- Codex (Engineer)
 and Jem (Analyst)- as BACKENDS, runs them in parallel, and prints their raw responses clearly
 labelled. Baxter then REVIEWS them, bounces any sub-standard part back (re-run with a sharper
-brief), and CURATES the finished answer to present to Atul. The bots never post to Discord;
+brief), and CURATES the finished answer to present to the owner. The bots never post to Discord;
 Baxter owns the final output. See memory: coop-v2-baxter-orchestrated.
 
   python baxter_coop.py --brief "10 ideas to ..." [--context path\to\prd.md]
