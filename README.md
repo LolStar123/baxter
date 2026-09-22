@@ -1,3 +1,14 @@
+<!-- working-example:start -->
+## Try it in a minute
+
+**[Live example](https://lolstar123.github.io/baxter/)** · [Example code](examples/portfolio/model.mjs) · [Run locally](examples/portfolio/README.md) · [Atul's website](https://atul-kanodia-fieldnotes.atulswaggalicious.chatgpt.site)
+
+Schedule overlapping tasks, change capacity and see failed evidence held for repair.
+
+<img src="examples/portfolio/preview.png" alt="baxter example inputs and calculated output" width="760">
+
+<!-- working-example:end -->
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
   <img src="docs/media/banner-light.svg" alt="Baxter system readout: intake, gate, build, and proof are online." width="100%">
