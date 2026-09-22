@@ -1,2 +1,250 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500&display=swap');
-:root{color-scheme:dark;--bg:#252125;--panel:#302b31;--line:#504750;--ink:#eee5e7;--muted:#bfb0ba;--accent:#c8b8a0}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 Archivo,sans-serif}header{display:flex;justify-content:space-between;padding:23px 5%;border-bottom:1px solid var(--line)}a{color:inherit;text-underline-offset:4px}main{max-width:1350px;margin:auto;padding:36px 5%}.intro{display:flex;align-items:center;justify-content:space-between;gap:30px}h1{font:500 clamp(38px,4.8vw,62px)/1.1 Fraunces,Georgia,serif;margin:12px 0 28px}.intro>p{max-width:345px;color:var(--muted)}.eyebrow,.small,footer{font-size:12px;color:var(--muted)}button,input,select,textarea{background:var(--panel);color:inherit;border:1px solid var(--line);font:inherit;padding:9px 12px}button{cursor:pointer}button:disabled{opacity:.4;cursor:default}button[aria-pressed=true],#run{border-color:var(--accent);background:#484039}:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:24px 0 15px}label{font-size:12px;color:var(--muted);display:grid;gap:6px}.controls label{margin-left:auto}#status{color:var(--accent);min-height:25px}.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.8fr);gap:36px}h2{font-size:16px;font-weight:500}.queue-heading{display:flex;align-items:center;justify-content:space-between}.queue-heading span{font-size:12px;color:var(--muted)}.task{border-top:1px solid var(--line);padding:17px 0;display:grid;grid-template-columns:28px minmax(0,1fr) 70px;gap:12px}.task .number{font-size:12px;color:var(--muted);padding-top:3px}.task h3{font-size:14px;font-weight:500;margin:0}.task p{font-size:11px;color:var(--muted);margin:5px 0 0;overflow-wrap:anywhere}.state{text-align:right;font-size:11px}.state.passed{color:#b8ccac}.state.failed{color:#e4a999}.state.running{color:#d8c397}.task .proof{color:var(--accent)}aside{min-width:0;padding-top:10px}.tabs{display:flex;gap:8px;margin-bottom:20px}.tabs button{font-size:12px}textarea{width:100%;resize:vertical;font:12px/1.7 ui-monospace,Consolas,monospace;tab-size:2}#content{margin:12px 0;background:#201d22;min-height:340px}#file{width:100%;min-width:0}#save-input{font-size:12px}.roles{border-top:1px solid var(--line);margin-top:22px;font-size:12px;color:var(--muted)}.roles b{font-weight:500;color:var(--ink)}.receipt{border-bottom:1px solid var(--line);padding:14px 0}.receipt p{font-size:12px;margin:4px 0;overflow-wrap:anywhere}.receipt time{color:var(--muted);font-size:11px}details{margin:24px 0}summary{cursor:pointer}#task-error{color:#e4a999}footer{border-top:1px solid var(--line);margin-top:32px;padding-top:20px}@media(max-width:780px){.workspace{grid-template-columns:minmax(0,1fr)}.intro{display:block}.intro>p{max-width:none}.controls label{margin-left:0}.task{grid-template-columns:22px minmax(0,1fr) 58px;gap:8px}}
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500&display=swap");
+:root {
+    color-scheme: dark;
+    --bg: #252125;
+    --panel: #302b31;
+    --line: #504750;
+    --ink: #eee5e7;
+    --muted: #bfb0ba;
+    --accent: #c8b8a0;
+}
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font:
+        14px/1.6 Archivo,
+        sans-serif;
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 23px 5%;
+    border-bottom: 1px solid var(--line);
+}
+a {
+    color: inherit;
+    text-underline-offset: 4px;
+}
+main {
+    max-width: 1350px;
+    margin: auto;
+    padding: 36px 5%;
+}
+.intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+h1 {
+    font:
+        500 clamp(38px, 4.8vw, 62px) / 1.1 Fraunces,
+        Georgia,
+        serif;
+    margin: 12px 0 28px;
+}
+.intro > p {
+    max-width: 345px;
+    color: var(--muted);
+}
+.eyebrow,
+.small,
+footer {
+    font-size: 12px;
+    color: var(--muted);
+}
+button,
+input,
+select,
+textarea {
+    background: var(--panel);
+    color: inherit;
+    border: 1px solid var(--line);
+    font: inherit;
+    padding: 9px 12px;
+}
+button {
+    cursor: pointer;
+}
+button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+button[aria-pressed="true"],
+#run {
+    border-color: var(--accent);
+    background: #484039;
+}
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+.controls {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 24px 0 15px;
+}
+label {
+    font-size: 12px;
+    color: var(--muted);
+    display: grid;
+    gap: 6px;
+}
+.controls label {
+    margin-left: auto;
+}
+#status {
+    color: var(--accent);
+    min-height: 25px;
+}
+.workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+    gap: 36px;
+}
+h2 {
+    font-size: 16px;
+    font-weight: 500;
+}
+.queue-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.queue-heading span {
+    font-size: 12px;
+    color: var(--muted);
+}
+.task {
+    border-top: 1px solid var(--line);
+    padding: 17px 0;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 70px;
+    gap: 12px;
+}
+.task .number {
+    font-size: 12px;
+    color: var(--muted);
+    padding-top: 3px;
+}
+.task h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+}
+.task p {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 5px 0 0;
+    overflow-wrap: anywhere;
+}
+.state {
+    text-align: right;
+    font-size: 11px;
+}
+.state.passed {
+    color: #b8ccac;
+}
+.state.failed {
+    color: #e4a999;
+}
+.state.running {
+    color: #d8c397;
+}
+.task .proof {
+    color: var(--accent);
+}
+aside {
+    min-width: 0;
+    padding-top: 10px;
+}
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.tabs button {
+    font-size: 12px;
+}
+textarea {
+    width: 100%;
+    resize: vertical;
+    font:
+        12px/1.7 ui-monospace,
+        Consolas,
+        monospace;
+    tab-size: 2;
+}
+#content {
+    margin: 12px 0;
+    background: #201d22;
+    min-height: 340px;
+}
+#file {
+    width: 100%;
+    min-width: 0;
+}
+#save-input {
+    font-size: 12px;
+}
+.roles {
+    border-top: 1px solid var(--line);
+    margin-top: 22px;
+    font-size: 12px;
+    color: var(--muted);
+}
+.roles b {
+    font-weight: 500;
+    color: var(--ink);
+}
+.receipt {
+    border-bottom: 1px solid var(--line);
+    padding: 14px 0;
+}
+.receipt p {
+    font-size: 12px;
+    margin: 4px 0;
+    overflow-wrap: anywhere;
+}
+.receipt time {
+    color: var(--muted);
+    font-size: 11px;
+}
+details {
+    margin: 24px 0;
+}
+summary {
+    cursor: pointer;
+}
+#task-error {
+    color: #e4a999;
+}
+footer {
+    border-top: 1px solid var(--line);
+    margin-top: 32px;
+    padding-top: 20px;
+}
+@media (max-width: 780px) {
+    .workspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .intro {
+        display: block;
+    }
+    .intro > p {
+        max-width: none;
+    }
+    .controls label {
+        margin-left: 0;
+    }
+    .task {
+        grid-template-columns: 22px minmax(0, 1fr) 58px;
+        gap: 8px;
+    }
+}
