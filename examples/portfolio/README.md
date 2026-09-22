@@ -1,33 +1,7 @@
-# baxter: working example
+# Baxter workflow desk
 
-Schedule overlapping tasks, change capacity and see failed evidence held for repair.
+Serve with `python -m http.server 8000 --directory examples/portfolio`, then open http://localhost:8000. Run `node --test examples/portfolio/model.test.mjs` and `node tools/run_workflow.mjs` from the repository root.
 
-**[Open the demo](https://lolstar123.github.io/baxter/)** · [Calculation / workflow code](model.mjs) · [Checks](model.test.mjs)
+The browser runner executes the same jobs in Web Workers. Tests verify actual artifacts, reconciliation failures, dependency cycles and file conflicts. For browser checks, install Playwright and Chromium, then run `python tools/browser_audit.py`.
 
-![Example output](preview.png)
-
-## Run it
-
-From the repository root, with Python 3 and Node.js 22:
-
-```sh
-python -m http.server 8000 --directory examples/portfolio
-```
-
-Open http://localhost:8000. Change an input, or edit the JSON fixture, then export the computed result as JSON or CSV.
-
-```sh
-node --test examples/portfolio/model.test.mjs
-```
-
-## What it does
-
-Triage the request, define a task and reserve the files it needs. Work with conflicting edits waits its turn. A separate verification step checks the result before Baxter marks it done.
-
-## Scope and source
-
-A deterministic scheduler and verification example. It does not contact inboxes or launch paid agents.
-
-Public baxter_usage.py, baxter_lanes.py, baxter_verify.py and PRD workflow.
-
-`model.mjs` is the small public implementation. `app.mjs` connects its inputs and outputs to the browser. No package install or network key is needed to run the example. GitHub Pages runs the same files after the checks pass.
+[System guide](../../README.md) | [Scope](../../PROVENANCE.md)

@@ -1,0 +1,160 @@
+{
+  "scope": "Synthetic local order-processing workflow. Real code jobs, not live AI agents or business records.",
+  "files": {
+    "input/orders.csv": "id,team,amount,quantity\n1,research,20,1\n2,platform,57,2\n3,support,94,3\n4,product,131,4\n5,research,168,5\n6,platform,205,6\n7,support,242,7\n8,product,279,1\n9,research,316,2\n10,platform,353,3\n11,support,390,4\n12,product,427,5\n13,research,464,6\n14,platform,501,7\n15,support,538,1\n16,product,575,2\n17,research,612,3\n18,platform,649,4\n19,support,686,5\n20,product,723,6\n21,research,760,7\n22,platform,797,1\n23,support,834,2\n24,product,871,3\n25,research,908,4\n26,platform,945,5\n27,support,982,6\n28,product,39,7\n29,research,76,1\n30,platform,113,2\n31,support,150,3\n32,product,187,4\n33,research,224,5\n34,platform,261,6\n35,support,298,7\n36,product,335,1\n37,research,372,2\n38,platform,409,3\n39,support,446,4\n40,product,483,5\n41,research,520,6\n42,platform,557,7\n43,support,594,1\n44,product,631,2\n45,research,668,3\n46,platform,705,4\n47,support,742,5\n48,product,779,6\n49,research,816,7\n50,platform,853,1\n51,support,890,2\n52,product,927,3\n53,research,964,4\n54,platform,21,5\n55,support,58,6\n56,product,95,7\n57,research,132,1\n58,platform,169,2\n59,support,206,3\n60,product,243,4\n61,research,280,5\n62,platform,317,6\n63,support,354,7\n64,product,391,1\n65,research,428,2\n66,platform,465,3\n67,support,502,4\n68,product,539,5\n69,research,576,6\n70,platform,613,7\n71,support,650,1\n72,product,687,2\n73,research,724,3\n74,platform,761,4\n75,support,798,5\n76,product,835,6\n77,research,872,7\n78,platform,909,1\n79,support,946,2\n80,product,983,3\n81,research,40,4\n82,platform,77,5\n83,support,114,6\n84,product,151,7\n85,research,188,1\n86,platform,225,2\n87,support,262,3\n88,product,299,4\n89,research,336,5\n90,platform,373,6\n91,support,410,7\n92,product,447,1\n93,research,484,2\n94,platform,521,3\n95,support,558,4\n96,product,595,5\n97,research,632,6\n98,platform,669,7\n99,support,706,1\n100,product,743,2\n101,research,780,3\n102,platform,817,4\n103,support,854,5\n104,product,891,6\n105,research,928,7\n106,platform,965,1\n107,support,22,2\n108,product,59,3\n109,research,96,4\n110,platform,133,5\n111,support,170,6\n112,product,207,7\n113,research,244,1\n114,platform,281,2\n115,support,318,3\n116,product,355,4\n117,research,392,5\n118,platform,429,6\n119,support,466,7\n120,product,503,1\n121,research,540,2\n122,platform,577,3\n123,support,614,4\n124,product,651,5\n125,research,688,6\n126,platform,725,7\n127,support,762,1\n128,product,799,2\n129,research,836,3\n130,platform,873,4\n131,support,910,5\n132,product,947,6\n133,research,984,7\n134,platform,41,1\n135,support,78,2\n136,product,115,3\n137,research,152,4\n138,platform,189,5\n139,support,226,6\n140,product,263,7\n141,research,300,1\n142,platform,337,2\n143,support,374,3\n144,product,411,4\n145,research,448,5\n146,platform,485,6\n147,support,522,7\n148,product,559,1\n149,research,596,2\n150,platform,633,3\n151,support,670,4\n152,product,707,5\n153,research,744,6\n154,platform,781,7\n155,support,818,1\n156,product,855,2\n157,research,892,3\n158,platform,929,4\n159,support,966,5\n160,product,23,6\n161,research,60,7\n162,platform,97,1\n163,support,134,2\n164,product,171,3\n165,research,208,4\n166,platform,245,5\n167,support,282,6\n168,product,319,7\n169,research,356,1\n170,platform,393,2\n171,support,430,3\n172,product,467,4\n173,research,504,5\n174,platform,541,6\n175,support,578,7\n176,product,615,1\n177,research,652,2\n178,platform,689,3\n179,support,726,4\n180,product,763,5\n181,research,800,6\n182,platform,837,7\n183,support,874,1\n184,product,911,2\n185,research,948,3\n186,platform,985,4\n187,support,42,5\n188,product,79,6\n189,research,116,7\n190,platform,153,1\n191,support,190,2\n192,product,227,3\n193,research,264,4\n194,platform,301,5\n195,support,338,6\n196,product,375,7\n197,research,412,1\n198,platform,449,2\n199,support,486,3\n200,product,523,4\n201,research,560,5\n202,platform,597,6\n203,support,634,7\n204,product,671,1\n205,research,708,2\n206,platform,745,3\n207,support,782,4\n208,product,819,5\n209,research,856,6\n210,platform,893,7\n211,support,930,1\n212,product,967,2\n213,research,24,3\n214,platform,61,4\n215,support,98,5\n216,product,135,6\n217,research,172,7\n218,platform,209,1\n219,support,246,2\n220,product,283,3\n1,research,320,4\n2,platform,357,5\n3,support,394,6\n4,product,431,7\n5,research,468,1\n6,platform,505,2\n7,support,542,3\n8,product,579,4\n9,research,616,5\n10,platform,653,6\n11,support,690,7\n12,product,727,1\n13,research,764,2\n14,platform,801,3\n15,support,838,4\n16,product,875,5\n17,research,912,6\n18,platform,949,7\n19,support,986,1\n20,product,43,2",
+    "input/readme.md": "# Order research pipeline\n\nParse, validate and deduplicate the supplied CSV. Aggregate each team and independently reconcile the totals. Inspect the generated report and proof receipts before accepting the result.\n"
+  },
+  "tasks": [
+    {
+      "id": "parse",
+      "action": "parse",
+      "role": "product manager",
+      "depends": [],
+      "reads": [
+        "input/orders.csv"
+      ],
+      "writes": [
+        "work/parsed.json"
+      ],
+      "title": "Parse the supplied order CSV"
+    },
+    {
+      "id": "schema",
+      "action": "validate",
+      "role": "verifier",
+      "depends": [
+        "parse"
+      ],
+      "reads": [
+        "work/parsed.json"
+      ],
+      "writes": [
+        "proof/schema.json"
+      ],
+      "title": "Reject invalid amounts and quantities"
+    },
+    {
+      "id": "clean",
+      "action": "dedupe",
+      "role": "developer",
+      "depends": [
+        "schema"
+      ],
+      "reads": [
+        "work/parsed.json"
+      ],
+      "writes": [
+        "work/clean.json"
+      ],
+      "title": "Deduplicate orders by ID"
+    },
+    {
+      "id": "summary",
+      "action": "aggregate",
+      "role": "developer",
+      "depends": [
+        "clean"
+      ],
+      "reads": [
+        "work/clean.json"
+      ],
+      "writes": [
+        "output/summary.json"
+      ],
+      "title": "Calculate team revenue and order counts"
+    },
+    {
+      "id": "report",
+      "action": "report",
+      "role": "developer",
+      "depends": [
+        "summary"
+      ],
+      "reads": [
+        "output/summary.json"
+      ],
+      "writes": [
+        "output/report.md"
+      ],
+      "title": "Write the result as a readable report"
+    },
+    {
+      "id": "reconcile",
+      "action": "reconcile",
+      "role": "verifier",
+      "depends": [
+        "summary"
+      ],
+      "reads": [
+        "work/clean.json",
+        "output/summary.json"
+      ],
+      "writes": [
+        "proof/totals.json"
+      ],
+      "title": "Recalculate totals independently"
+    },
+    {
+      "id": "readme",
+      "action": "copy",
+      "role": "developer",
+      "depends": [],
+      "reads": [
+        "input/readme.md"
+      ],
+      "writes": [
+        "output/readme.md"
+      ],
+      "title": "Prepare the project instructions"
+    },
+    {
+      "id": "hash-input",
+      "action": "hash",
+      "role": "baxter",
+      "depends": [],
+      "reads": [
+        "input/orders.csv"
+      ],
+      "writes": [
+        "proof/input-hash.json"
+      ],
+      "title": "Record an input checksum"
+    },
+    {
+      "id": "hash-report",
+      "action": "hash",
+      "role": "verifier",
+      "depends": [
+        "report"
+      ],
+      "reads": [
+        "output/report.md"
+      ],
+      "writes": [
+        "proof/report-hash.json"
+      ],
+      "title": "Record the report checksum"
+    },
+    {
+      "id": "package",
+      "action": "manifest",
+      "role": "baxter",
+      "depends": [
+        "reconcile",
+        "hash-report",
+        "readme",
+        "hash-input"
+      ],
+      "reads": [
+        "output/report.md",
+        "output/summary.json",
+        "output/readme.md",
+        "proof/totals.json"
+      ],
+      "writes": [
+        "output/manifest.json"
+      ],
+      "title": "Package a verified artifact manifest"
+    }
+  ]
+}

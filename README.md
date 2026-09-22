@@ -1,11 +1,20 @@
 <!-- working-example:start -->
-## Try it in a minute
+## Run the workflow desk
 
-**[Live example](https://lolstar123.github.io/baxter/)** · [Example code](examples/portfolio/model.mjs) · [Run locally](examples/portfolio/README.md) · [Atul's website](https://atul-kanodia-fieldnotes.atulswaggalicious.chatgpt.site)
+**[Open the live desk](https://lolstar123.github.io/baxter/)** | [Working browser code](examples/portfolio) | [Local runner](tools/run_workflow.mjs)
 
-Schedule overlapping tasks, change capacity and see failed evidence held for repair.
+Run ten real code jobs over 240 synthetic orders. The workflow parses and validates input, removes duplicate IDs, creates a team report and independently reconciles its totals. Inspect every generated file and timed execution receipt. Break an input to see verification fail and downstream work stop; restore it and rerun.
 
-<img src="examples/portfolio/preview.png" alt="baxter example inputs and calculated output" width="760">
+Change concurrency, edit the task definitions and dependencies, or replace the input CSV. Export all artifacts and receipts as JSON. The same actions run locally with:
+
+```sh
+node tools/run_workflow.mjs
+node --test examples/portfolio/model.test.mjs
+```
+
+![Baxter workflow desk](examples/portfolio/preview.png)
+
+The browser executes deterministic jobs in Web Workers, not paid AI agents. Scheduling respects dependencies, capacity and declared read/write conflicts. It demonstrates Baxter's orchestration and proof gates using real executable work; the original system source and setup are below.
 
 <!-- working-example:end -->
 
