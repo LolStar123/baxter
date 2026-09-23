@@ -39,6 +39,7 @@ try:
         page.screenshot(path=str(ROOT/'examples/portfolio/preview.png'))
         page.set_viewport_size({'width':390,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'mobile overflow'
+        assert page.locator('#report-preview table tbody tr').count()==4
         assert not errors,errors
         print('PASS: real worker execution, generated report, independent proof, failure gating, recovery and export')
         browser.close()

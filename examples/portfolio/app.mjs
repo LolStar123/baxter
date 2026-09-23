@@ -21,6 +21,22 @@ let original,
     running = false,
     active = 0;
 function render() {
+    const report = files["output/report.md"];
+    $("#report-preview").hidden = !report;
+    const summary = files["output/summary.json"]
+        ? JSON.parse(files["output/summary.json"])
+        : null;
+    $("#report-preview").innerHTML =
+        report && Array.isArray(summary)
+            ? `<table><thead><tr><th>team</th><th>orders</th><th>units</th><th>revenue</th></tr></thead><tbody>${summary.map((r) => `<tr><td>${esc(r.team)}</td><td>${r.orders}</td><td>${r.units}</td><td>${Number(r.revenue).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join("")}</tbody></table>`
+            : esc(report || "");
+    $("#output-summary").textContent = running
+        ? "Cleaning orders, building outputs and checking the evidence..."
+        : report
+          ? "Generated report. Verification status is shown beside each job."
+          : receipts.some((r) => !r.ok)
+            ? "The verifier stopped this run. Fix the failed input before handing anything off."
+            : "Run the workflow to clean the sample orders, build a report and verify the handoff.";
     $("#tasks").innerHTML = tasks
         .map((t, i) => {
             const receipt = receipts.findLast((r) => r.id === t.id);

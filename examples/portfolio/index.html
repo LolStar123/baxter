@@ -21,8 +21,9 @@
                     <h1>work needs proof.</h1>
                 </div>
                 <p>
-                    Run a real data workflow, inspect its outputs, then break an
-                    input and watch the verifier stop the handoff.
+                    Clean 240 sample order rows, generate a report and verify
+                    every output. Then break an input and watch the verifier
+                    stop the handoff.
                 </p>
             </div>
             <div class="controls">
@@ -67,6 +68,14 @@
                     </details>
                 </section>
                 <aside>
+                    <section class="report-preview">
+                        <h2>workflow output</h2>
+                        <p id="output-summary" aria-live="polite">
+                            Run the workflow to clean the sample orders, build a
+                            report and verify the handoff.
+                        </p>
+                        <div id="report-preview" hidden></div>
+                    </section>
                     <div class="tabs">
                         <button id="show-artifacts" aria-pressed="true">
                             artifacts</button
