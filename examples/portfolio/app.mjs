@@ -31,16 +31,16 @@ function render() {
             ? `<table><thead><tr><th>team</th><th>orders</th><th>units</th><th>revenue</th></tr></thead><tbody>${summary.map((r) => `<tr><td>${esc(r.team)}</td><td>${r.orders}</td><td>${r.units}</td><td>${Number(r.revenue).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join("")}</tbody></table>`
             : esc(report || "");
     $("#output-summary").textContent = running
-        ? "Cleaning orders, building outputs and checking the evidence..."
+            ? "running jobs…"
         : report
-          ? "Generated report. Verification status is shown beside each job."
+          ? "report verified."
           : receipts.some((r) => !r.ok)
-            ? "The verifier stopped this run. Fix the failed input before handing anything off."
-            : "Run the workflow to clean the sample orders, build a report and verify the handoff.";
+            ? "handoff blocked."
+            : "run the workflow.";
     $("#tasks").innerHTML = tasks
         .map((t, i) => {
             const receipt = receipts.findLast((r) => r.id === t.id);
-            return `<article class="task"><span class="number">${String(i + 1).padStart(2, "0")}</span><div><h3>${esc(t.title || t.id)}</h3><p>${esc(t.role || "developer")} / ${esc(t.action)} / waits for ${esc(t.depends.join(", ") || "nothing")}</p><p>${esc(t.writes.join(", "))}</p>${receipt ? `<p class="proof">${esc(receipt.proof || receipt.error)}</p>` : ""}</div><span class="state ${states[t.id]}">${states[t.id]}</span></article>`;
+            return `<article class="task"><span class="number">${String(i + 1).padStart(2, "0")}</span><div><h3>${esc(t.title || t.id)}</h3>${receipt ? `<p class="proof">${esc(receipt.proof || receipt.error)}</p>` : ""}</div><span class="state ${states[t.id]}">${states[t.id]}</span></article>`;
         })
         .join("");
     const passed = Object.values(states).filter((s) => s === "passed").length;
@@ -149,9 +149,7 @@ function pump() {
             if (states[t.id] === "pending") states[t.id] = "blocked";
         running = false;
         const failed = Object.values(states).some((s) => s !== "passed");
-        $("#status").textContent = failed
-            ? "Handoff held. Inspect the failed receipt, fix the input, then rerun."
-            : "Workflow finished. Every job passed; inspect the report and verification receipts.";
+        $("#status").textContent = failed ? "handoff blocked." : "verified and ready.";
         render();
         if (!failed) {
             $("#file").value = files["output/report.md"]
@@ -164,8 +162,7 @@ function pump() {
 $("#run").onclick = () => {
     resetRun();
     running = true;
-    $("#status").textContent =
-        "Running declared jobs and checking their outputs...";
+    $("#status").textContent = "running…";
     pump();
 };
 $("#file").onchange = showFile;

@@ -21,10 +21,12 @@ try:
         page.wait_for_function('!__baxter.running && __baxter.receipts===10')
         assert page.evaluate('Object.values(__baxter.states).every(s=>s==="passed")')
         assert 'Team order report' in page.locator('#content').input_value()
+        page.locator('details summary').first.click()
         with page.expect_download() as dl:page.locator('#export').click()
         import json
         output=json.loads(Path(dl.value.path()).read_text())
         assert json.loads(output['files']['proof/totals.json'])['checkedOrders']==220
+        page.locator('details summary').nth(1).click()
         page.locator('#break').click();page.locator('#run').click()
         page.wait_for_function('!__baxter.running && __baxter.receipts>0')
         assert page.evaluate('__baxter.states.schema')=='failed'

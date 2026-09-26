@@ -1,106 +1,12 @@
-<!doctype html>
-<html lang="en">
-    <meta charset="utf-8" /><meta
-        name="viewport"
-        content="width=device-width,initial-scale=1"
-    /><title>baxter / workflow desk</title
-    ><link rel="stylesheet" href="style.css" />
-    <body>
-        <header>
-            <a href="https://github.com/LolStar123/baxter"
-                >baxter / source & system</a
-            ><a
-                href="https://lolstar123.github.io/just-a-little-further/"
-                >atul's projects</a
-            >
-        </header>
-        <main>
-            <div class="intro">
-                <div>
-                    <p class="eyebrow">a small job. a proper paper trail.</p>
-                    <h1>baxter / workflow runner</h1>
-                </div>
-                <p>
-                    Clean 240 orders. Build the report. Let the verifier decide
-                    if it ships.
-                </p>
-            </div>
-            <div class="controls">
-                <button id="run">run workflow</button
-                ><button id="break">break an input</button
-                ><button id="reset">restore example</button
-                ><label
-                    >concurrent lanes<select id="capacity">
-                        <option>1</option>
-                        <option selected>2</option>
-                        <option>3</option>
-                        <option>4</option>
-                    </select></label
-                ><button id="export">export artifacts & receipts</button>
-            </div>
-            <p id="status" role="status">loading the work queue...</p>
-            <div class="workspace">
-                <section>
-                    <div class="queue-heading">
-                        <h2>the work queue</h2>
-                        <span id="progress"></span>
-                    </div>
-                    <div id="tasks"></div>
-                    <details>
-                        <summary>edit the workflow</summary>
-                        <p>
-                            Change tasks, dependencies and file paths.
-                        </p>
-                        <label
-                            >task definitions<textarea
-                                id="definitions"
-                                rows="12"
-                            ></textarea></label
-                        ><button id="apply">apply task changes</button>
-                        <p id="task-error" role="alert"></p>
-                        <p class="small">
-                            parse / validate / dedupe / aggregate / report /
-                            reconcile / copy / hash / manifest
-                        </p>
-                    </details>
-                </section>
-                <aside>
-                    <section class="report-preview">
-                        <h2>workflow output</h2>
-                        <p id="output-summary" aria-live="polite">
-                            Run the workflow to build and verify the report.
-                        </p>
-                        <div id="report-preview" hidden></div>
-                    </section>
-                    <div class="tabs">
-                        <button id="show-artifacts" aria-pressed="true">
-                            artifacts</button
-                        ><button id="show-receipts" aria-pressed="false">
-                            execution receipts
-                        </button>
-                    </div>
-                    <div id="artifact-panel">
-                        <label>file<select id="file"></select></label
-                        ><textarea
-                            id="content"
-                            rows="15"
-                            spellcheck="false"
-                            aria-label="Selected artifact contents"
-                        ></textarea
-                        ><button id="save-input">save input changes</button>
-                        <p class="small">
-                            Outputs appear as jobs finish.
-                        </p>
-                    </div>
-                    <div id="receipts" hidden></div>
-                    <p class="roles"><b>scope</b> → <b>build</b> → <b>verify</b> → <b>handoff</b></p>
-                </aside>
-            </div>
-            <footer>
-                Local Web Worker demo. Synthetic orders. The repository contains
-                the full orchestration and verification modules.
-            </footer>
-        </main>
-        <script type="module" src="app.mjs"></script>
-    </body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>baxter / run the workflow</title><link rel="stylesheet" href="style.css"></head><body>
+<header><a href="https://lolstar123.github.io/just-a-little-further/">atul / baxter</a><a href="https://github.com/LolStar123/baxter">source</a></header>
+<main>
+<section class="hero"><p>discord-native llm harness</p><h1>give it the job.<br><em>keep the receipts.</em></h1></section>
+<section class="run-bar"><button id="run">run workflow</button><label>lanes<select id="capacity"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label><span id="progress"></span></section>
+<p id="status" role="status">loading queue…</p>
+<section class="queue"><h2>scope → build → verify → handoff</h2><div id="tasks"></div></section>
+<section class="report-preview"><div><h2>output</h2><p id="output-summary">run the workflow.</p></div><div id="report-preview" hidden></div></section>
+<details><summary>inspect the run</summary><div class="tabs"><button id="show-artifacts" aria-pressed="true">artifacts</button><button id="show-receipts" aria-pressed="false">receipts</button></div><div id="artifact-panel"><select id="file" aria-label="File"></select><textarea id="content" rows="12" spellcheck="false"></textarea><button id="save-input">save input</button></div><div id="receipts" hidden></div><button id="export">export run</button></details>
+<details><summary>test the verifier</summary><button id="break">break an input</button><button id="reset">restore</button></details>
+<details><summary>edit tasks</summary><textarea id="definitions" rows="10"></textarea><button id="apply">apply</button><p id="task-error"></p></details>
+</main><script type="module" src="app.mjs"></script></body></html>
