@@ -10,7 +10,7 @@
             <a href="https://github.com/LolStar123/baxter"
                 >baxter / source & system</a
             ><a
-                href="https://atul-kanodia-fieldnotes.atulswaggalicious.chatgpt.site"
+                href="https://lolstar123.github.io/just-a-little-further/"
                 >atul's projects</a
             >
         </header>
@@ -21,9 +21,8 @@
                     <h1>baxter / workflow runner</h1>
                 </div>
                 <p>
-                    Clean 240 sample order rows, generate a report and verify
-                    every output. Then break an input and watch the verifier
-                    stop the handoff.
+                    Clean 240 orders. Build the report. Let the verifier decide
+                    if it ships.
                 </p>
             </div>
             <div class="controls">
@@ -50,9 +49,7 @@
                     <details>
                         <summary>edit the workflow</summary>
                         <p>
-                            Actions execute locally. Change dependencies,
-                            input/output paths or add a task using the supported
-                            actions below.
+                            Change tasks, dependencies and file paths.
                         </p>
                         <label
                             >task definitions<textarea
@@ -71,8 +68,7 @@
                     <section class="report-preview">
                         <h2>workflow output</h2>
                         <p id="output-summary" aria-live="polite">
-                            Run the workflow to clean the sample orders, build a
-                            report and verify the handoff.
+                            Run the workflow to build and verify the report.
                         </p>
                         <div id="report-preview" hidden></div>
                     </section>
@@ -93,26 +89,16 @@
                         ></textarea
                         ><button id="save-input">save input changes</button>
                         <p class="small">
-                            Input files are editable. Generated outputs become
-                            available as their jobs finish.
+                            Outputs appear as jobs finish.
                         </p>
                     </div>
                     <div id="receipts" hidden></div>
-                    <div class="roles">
-                        <p><b>baxter</b> / coordinate and package</p>
-                        <p><b>product manager</b> / shape the input</p>
-                        <p><b>developer</b> / produce the artifacts</p>
-                        <p><b>verifier</b> / check the evidence</p>
-                    </div>
+                    <p class="roles"><b>scope</b> → <b>build</b> → <b>verify</b> → <b>handoff</b></p>
                 </aside>
             </div>
             <footer>
-                The public desk executes deterministic JavaScript jobs in Web
-                Workers. It does not pretend to launch AI agents or access an
-                inbox. The full repository contains Baxter's original
-                orchestration, concurrency and verification modules. The
-                supplied 240-row order dataset is synthetic. No credentials
-                needed.
+                Local Web Worker demo. Synthetic orders. The repository contains
+                the full orchestration and verification modules.
             </footer>
         </main>
         <script type="module" src="app.mjs"></script>
