@@ -37,14 +37,15 @@ function render() {
           : receipts.some((r) => !r.ok)
             ? "handoff blocked."
             : "run the workflow.";
+    const roleClass = (role) => String(role || "baxter").replaceAll(" ", "-");
     $("#tasks").innerHTML = tasks
         .map((t, i) => {
             const receipt = receipts.findLast((r) => r.id === t.id);
-            return `<article class="task"><span class="number">${String(i + 1).padStart(2, "0")}</span><div><h3>${esc(t.title || t.id)}</h3>${receipt ? `<p class="proof">${esc(receipt.proof || receipt.error)}</p>` : ""}</div><span class="state ${states[t.id]}">${states[t.id]}</span></article>`;
+            return `<article class="task" data-state="${states[t.id]}"><span class="avatar ${roleClass(t.role)}" aria-hidden="true"></span><div><span class="role">${esc(t.role || "baxter")}</span><h3>${esc(t.title || t.id)}</h3>${receipt ? `<p class="proof">${esc(receipt.proof || receipt.error)}</p>` : ""}</div><span class="state ${states[t.id]}">${states[t.id]}</span></article>`;
         })
         .join("");
     const passed = Object.values(states).filter((s) => s === "passed").length;
-    $("#progress").textContent = `${passed} / ${tasks.length} passed`;
+    $("#progress").textContent = `${passed} / ${tasks.length} verified`;
     for (const id of [
         "run",
         "break",

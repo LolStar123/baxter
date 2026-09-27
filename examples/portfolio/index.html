@@ -1,12 +1,55 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>baxter / run the workflow</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="identity.css"></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#20212b">
+    <title>baxter / discord workflow harness</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="identity.css">
+</head>
+<body>
 <header><a href="https://lolstar123.github.io/just-a-little-further/">atul / baxter</a><a href="https://github.com/LolStar123/baxter">source</a></header>
 <main>
-<section class="hero"><p>discord-native llm harness</p><h1>/baxter run --verify</h1></section>
-<section class="run-bar"><button id="run">run workflow</button><label>lanes<select id="capacity"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label><span id="progress"></span></section>
-<p id="status" role="status">loading queue…</p>
-<section class="queue"><h2>scope → build → verify → handoff</h2><div id="tasks"></div></section>
-<section class="report-preview"><div><h2>output</h2><p id="output-summary">run the workflow.</p></div><div id="report-preview" hidden></div></section>
-<details><summary>inspect the run</summary><div class="tabs"><button id="show-artifacts" aria-pressed="true">artifacts</button><button id="show-receipts" aria-pressed="false">receipts</button></div><div id="artifact-panel"><select id="file" aria-label="File"></select><textarea id="content" rows="12" spellcheck="false"></textarea><button id="save-input">save input</button></div><div id="receipts" hidden></div><button id="export">export run</button></details>
-<details><summary>test the verifier</summary><button id="break">break an input</button><button id="reset">restore</button></details>
-<details><summary>edit tasks</summary><textarea id="definitions" rows="10"></textarea><button id="apply">apply</button><p id="task-error"></p></details>
-</main><script type="module" src="app.mjs"></script></body></html>
+    <section class="hero" aria-labelledby="page-title">
+        <h1 id="page-title">baxter</h1>
+        <p>a discord-native llm harness where bots scope, build and prove the work.</p>
+    </section>
+
+    <section class="discord-shell" aria-label="Baxter workflow channel">
+        <aside class="server-rail" aria-hidden="true"><b>B</b><i></i><i></i><i></i></aside>
+        <div class="channel">
+            <div class="channel-head"><strong><span>#</span> baxter-lab</strong><small>10 jobs · independent verification</small></div>
+
+            <div class="request-message">
+                <span class="atul-avatar" aria-hidden="true">A</span>
+                <div><strong>atul</strong><time>today at 08:41</time><p>turn the order file into a checked team report. keep the proof.</p></div>
+            </div>
+
+            <section class="run-bar" aria-label="Run controls">
+                <div class="slash-command"><span>/</span><strong>baxter run</strong><small>orders.csv → verified report</small></div>
+                <label>workers<select id="capacity"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+                <button id="run">run workflow</button>
+                <span id="progress"></span>
+            </section>
+            <p id="status" role="status">loading queue…</p>
+
+            <section class="queue" aria-labelledby="queue-title"><h2 id="queue-title">live thread</h2><div id="tasks"></div></section>
+
+            <section class="report-preview">
+                <div class="report-intro"><span class="baxter-avatar" aria-hidden="true"><i></i></span><div><strong>baxter</strong><small>app</small><p id="output-summary">run the workflow.</p></div></div>
+                <div id="report-preview" hidden></div>
+            </section>
+
+            <div class="channel-tools">
+                <details><summary>inspect the run</summary><div class="tabs"><button id="show-artifacts" aria-pressed="true">artifacts</button><button id="show-receipts" aria-pressed="false">receipts</button></div><div id="artifact-panel"><select id="file" aria-label="File"></select><textarea id="content" rows="12" spellcheck="false"></textarea><button id="save-input">save input</button></div><div id="receipts" hidden></div><button id="export">export run</button></details>
+                <details><summary>failure drill</summary><button id="break">break an input</button><button id="reset">restore</button></details>
+                <details><summary>edit workflow</summary><textarea id="definitions" rows="10"></textarea><button id="apply">apply</button><p id="task-error"></p></details>
+            </div>
+        </div>
+    </section>
+</main>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>

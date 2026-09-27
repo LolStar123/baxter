@@ -1,7 +1,7 @@
 <!-- working-example:start -->
-## Run the workflow desk
+## Run the Discord workflow lab
 
-**[Open the live desk](https://lolstar123.github.io/baxter/)** | [Working browser code](examples/portfolio) | [Local runner](tools/run_workflow.mjs)
+**[Open the live lab](https://lolstar123.github.io/baxter/)** | [Working browser code](examples/portfolio) | [Local runner](tools/run_workflow.mjs)
 
 Run ten real code jobs over 240 synthetic orders. The workflow parses and validates input, removes duplicate IDs, creates a team report and independently reconciles its totals. Inspect every generated file and timed execution receipt. Break an input to see verification fail and downstream work stop; restore it and rerun.
 
