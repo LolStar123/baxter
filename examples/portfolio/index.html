@@ -14,7 +14,7 @@
 <main>
     <section class="hero" aria-labelledby="page-title">
         <h1 id="page-title">baxter</h1>
-        <p>a discord-native llm harness where bots scope, build and prove the work.</p>
+        <p>a discord bot that scopes, schedules, executes and verifies work.</p>
     </section>
 
     <section class="discord-shell" aria-label="Baxter workflow channel">
@@ -33,6 +33,13 @@
                 <button id="run">run workflow</button>
                 <span id="progress"></span>
             </section>
+            <div class="workflow-map" aria-label="Baxter workflow stages">
+                <span data-beat="scope">scope</span><i aria-hidden="true">›</i>
+                <span data-beat="schedule">schedule</span><i aria-hidden="true">›</i>
+                <span data-beat="execute">execute</span><i aria-hidden="true">›</i>
+                <span data-beat="verify">verify</span>
+            </div>
+            <div class="run-ledger"><span id="run-phase">ready to dispatch</span><span id="run-count"></span></div>
             <p id="status" role="status">loading queue…</p>
 
             <section class="queue" aria-labelledby="queue-title"><h2 id="queue-title">live thread</h2><div id="tasks"></div></section>

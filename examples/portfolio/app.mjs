@@ -37,6 +37,24 @@ function render() {
           : receipts.some((r) => !r.ok)
             ? "handoff blocked."
             : "run the workflow.";
+    const passed = Object.values(states).filter((s) => s === "passed").length;
+    const failed = Object.values(states).some((s) => s === "failed");
+    const sourceRows = String(files["input/orders.csv"] || "")
+        .trim()
+        .split(/\r?\n/)
+        .filter(Boolean).length - 1;
+    $("#run-phase").textContent = running
+        ? "dispatching jobs"
+        : failed
+          ? "handoff blocked"
+          : report
+            ? "verified and ready"
+            : "ready to dispatch";
+    $("#run-count").textContent = `${tasks.length} tasks · ${Math.max(0, sourceRows)} source rows · ${passed} verified`;
+    const beats = running
+        ? passed >= Math.ceil(tasks.length * 0.7) ? ["scope", "schedule", "execute", "verify"] : ["scope", "schedule", "execute"]
+        : failed ? ["scope", "schedule", "execute"] : report ? ["scope", "schedule", "execute", "verify"] : ["scope"];
+    document.querySelectorAll("[data-beat]").forEach((node) => node.dataset.active = beats.includes(node.dataset.beat) ? "true" : "false");
     const roleClass = (role) => String(role || "baxter").replaceAll(" ", "-");
     $("#tasks").innerHTML = tasks
         .map((t, i) => {
@@ -44,7 +62,6 @@ function render() {
             return `<article class="task" data-state="${states[t.id]}"><span class="avatar ${roleClass(t.role)}" aria-hidden="true"></span><div><span class="role">${esc(t.role || "baxter")}</span><h3>${esc(t.title || t.id)}</h3>${receipt ? `<p class="proof">${esc(receipt.proof || receipt.error)}</p>` : ""}</div><span class="state ${states[t.id]}">${states[t.id]}</span></article>`;
         })
         .join("");
-    const passed = Object.values(states).filter((s) => s === "passed").length;
     $("#progress").textContent = `${passed} / ${tasks.length} verified`;
     for (const id of [
         "run",

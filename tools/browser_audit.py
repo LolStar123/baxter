@@ -17,9 +17,13 @@ try:
         errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(os.environ.get('AUDIT_URL',f'http://127.0.0.1:{server.server_port}'),wait_until='networkidle')
         page.wait_for_function('window.__baxter?.ready')
+        assert page.locator('[data-beat="scope"]').get_attribute('data-active') == 'true'
+        assert '10 tasks' in page.locator('#run-count').inner_text()
         page.locator('#run').click()
         page.wait_for_function('!__baxter.running && __baxter.receipts===10')
         assert page.evaluate('Object.values(__baxter.states).every(s=>s==="passed")')
+        assert page.locator('[data-beat="verify"]').get_attribute('data-active') == 'true'
+        assert 'verified and ready' in page.locator('#run-phase').inner_text()
         assert 'Team order report' in page.locator('#content').input_value()
         page.locator('details summary').first.click()
         with page.expect_download() as dl:page.locator('#export').click()
