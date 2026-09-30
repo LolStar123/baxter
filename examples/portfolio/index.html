@@ -39,8 +39,8 @@
                 <span data-beat="execute">execute</span><i aria-hidden="true">›</i>
                 <span data-beat="verify">verify</span>
             </div>
-            <div class="run-ledger"><span id="run-phase">ready to dispatch</span><span id="run-count"></span></div>
-            <p id="status" role="status">loading queue…</p>
+            <div class="run-ledger"><span id="run-phase" role="status" aria-live="polite">ready to dispatch</span><span id="run-count"></span></div>
+            <p id="status" class="sr-only" role="status" aria-live="polite">loading queue…</p>
 
             <section class="queue" aria-labelledby="queue-title"><h2 id="queue-title">live thread</h2><div id="tasks"></div></section>
 

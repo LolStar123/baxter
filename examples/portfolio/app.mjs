@@ -39,10 +39,6 @@ function render() {
             : "run the workflow.";
     const passed = Object.values(states).filter((s) => s === "passed").length;
     const failed = Object.values(states).some((s) => s === "failed");
-    const sourceRows = String(files["input/orders.csv"] || "")
-        .trim()
-        .split(/\r?\n/)
-        .filter(Boolean).length - 1;
     $("#run-phase").textContent = running
         ? "dispatching jobs"
         : failed
@@ -50,11 +46,27 @@ function render() {
           : report
             ? "verified and ready"
             : "ready to dispatch";
-    $("#run-count").textContent = `${tasks.length} tasks · ${Math.max(0, sourceRows)} source rows · ${passed} verified`;
-    const beats = running
-        ? passed >= Math.ceil(tasks.length * 0.7) ? ["scope", "schedule", "execute", "verify"] : ["scope", "schedule", "execute"]
-        : failed ? ["scope", "schedule", "execute"] : report ? ["scope", "schedule", "execute", "verify"] : ["scope"];
-    document.querySelectorAll("[data-beat]").forEach((node) => node.dataset.active = beats.includes(node.dataset.beat) ? "true" : "false");
+    $("#run-count").textContent = `${tasks.length} tasks · ${passed} verified`;
+    const stageRoles = {
+        scope: "product manager",
+        schedule: "baxter",
+        execute: "developer",
+        verify: "verifier",
+    };
+    const stageState = (role) => {
+        const roleTasks = tasks.filter((task) => task.role === role);
+        const statesForRole = roleTasks.map((task) => states[task.id]);
+        if (!statesForRole.length || statesForRole.every((state) => state === "pending" || !state)) return "pending";
+        if (statesForRole.some((state) => state === "failed" || state === "blocked")) return "failed";
+        if (statesForRole.some((state) => state === "running")) return "running";
+        if (statesForRole.every((state) => state === "passed")) return "passed";
+        return "active";
+    };
+    document.querySelectorAll("[data-beat]").forEach((node) => {
+        const state = stageState(stageRoles[node.dataset.beat]);
+        node.dataset.state = state;
+        node.dataset.active = ["running", "active", "passed"].includes(state) ? "true" : "false";
+    });
     const roleClass = (role) => String(role || "baxter").replaceAll(" ", "-");
     $("#tasks").innerHTML = tasks
         .map((t, i) => {

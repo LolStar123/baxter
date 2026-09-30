@@ -17,11 +17,12 @@ try:
         errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(os.environ.get('AUDIT_URL',f'http://127.0.0.1:{server.server_port}'),wait_until='networkidle')
         page.wait_for_function('window.__baxter?.ready')
-        assert page.locator('[data-beat="scope"]').get_attribute('data-active') == 'true'
+        assert page.locator('[data-beat="scope"]').get_attribute('data-state') == 'pending'
         assert '10 tasks' in page.locator('#run-count').inner_text()
         page.locator('#run').click()
         page.wait_for_function('!__baxter.running && __baxter.receipts===10')
         assert page.evaluate('Object.values(__baxter.states).every(s=>s==="passed")')
+        assert page.locator('[data-beat="scope"]').get_attribute('data-state') == 'passed'
         assert page.locator('[data-beat="verify"]').get_attribute('data-active') == 'true'
         assert 'verified and ready' in page.locator('#run-phase').inner_text()
         assert 'Team order report' in page.locator('#content').input_value()
@@ -44,6 +45,8 @@ try:
         page.evaluate('window.scrollTo(0,0)')
         page.screenshot(path=str(ROOT/'examples/portfolio/preview.png'))
         page.set_viewport_size({'width':390,'height':844})
+        (ROOT/'output'/'playwright').mkdir(parents=True,exist_ok=True)
+        page.screenshot(path=str(ROOT/'output'/'playwright'/'mobile.png'),full_page=True)
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'mobile overflow'
         assert page.locator('#report-preview table tbody tr').count()==4
         assert not errors,errors
