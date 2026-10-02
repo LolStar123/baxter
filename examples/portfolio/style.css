@@ -137,7 +137,7 @@ textarea {
 }
 .workspace {
     display:grid;
-    grid-template-columns:218px minmax(0,1fr) 326px;
+    grid-template-columns:minmax(0,1fr) 326px;
     max-width:1800px;
     margin:auto;
     min-height:calc(100vh - 68px)
@@ -396,7 +396,7 @@ h1 span {
 }
 .run-bar {
     display:grid;
-    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-columns:minmax(0,1fr) auto;
     gap:12px;
     align-items:center;
     padding:15px 0;
@@ -726,7 +726,7 @@ summary {
 }
 @media(max-width:1180px) {
     .workspace {
-        grid-template-columns:185px minmax(0,1fr) 285px
+        grid-template-columns:minmax(0,1fr) 285px
     }
     .scope-rail {
         padding-inline:14px
@@ -746,10 +746,10 @@ summary {
 }
 @media(max-width:950px) {
     .workspace {
-        grid-template-columns:175px minmax(0,1fr)
+        grid-template-columns:minmax(0,1fr)
     }
     .proof-rail {
-        grid-column:2;
+        grid-column:1;
         border-top:1px solid var(--line);
         border-left:0
     }

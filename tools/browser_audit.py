@@ -18,13 +18,13 @@ try:
         page.goto(os.environ.get('AUDIT_URL',f'http://127.0.0.1:{server.server_port}'),wait_until='networkidle')
         page.wait_for_function('window.__baxter?.ready')
         assert page.locator('[data-beat="scope"]').get_attribute('data-state') == 'pending'
-        assert '10 tasks' in page.locator('#run-count').inner_text()
+        assert '10 jobs' in page.locator('#run-count').inner_text()
         page.locator('#run').click()
         page.wait_for_function('!__baxter.running && __baxter.receipts===10')
         assert page.evaluate('Object.values(__baxter.states).every(s=>s==="passed")')
         assert page.locator('[data-beat="scope"]').get_attribute('data-state') == 'passed'
         assert page.locator('[data-beat="verify"]').get_attribute('data-active') == 'true'
-        assert 'verified and ready' in page.locator('#run-phase').inner_text()
+        assert page.locator('#run-phase').inner_text() == 'Verified'
         assert page.locator('#status').inner_text() == ''
         assert page.locator('.report-preview').bounding_box()['y'] < page.locator('.queue').bounding_box()['y']
         assert 'Team order report' in page.locator('#content').input_value()
@@ -38,7 +38,7 @@ try:
         assert page.evaluate('__baxter.states.schema')=='failed'
         assert page.evaluate('__baxter.states.package')=='blocked'
         assert page.locator('#report-preview').is_hidden()
-        assert 'blocked' in page.locator('#output-summary').inner_text()
+        assert page.locator('#run-phase').inner_text() == 'Blocked'
         (ROOT/'output'/'playwright').mkdir(parents=True,exist_ok=True)
         page.screenshot(path=str(ROOT/'output'/'playwright'/'failure.png'),full_page=True)
         page.locator('#reset').click();page.locator('#run').click()

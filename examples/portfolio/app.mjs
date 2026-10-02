@@ -26,7 +26,6 @@ function render() {
     const report = files["output/report.md"];
     const verified = tasks.length > 0 && tasks.every((task) => states[task.id] === "passed");
     $("#report-preview").hidden = !report || !verified;
-    $("#scope-jobs").textContent = tasks.length;
     $("#input-name").textContent = inputName;
     const rows = Math.max(0, (inputs["input/orders.csv"] || "").trim().split(/\r?\n/).length - 1);
     $("#input-meta").textContent = `${rows} source rows · ${inputOrigin}`;
@@ -37,13 +36,7 @@ function render() {
         report && verified && Array.isArray(summary)
             ? `<table><thead><tr><th>team</th><th>orders</th><th>units</th><th>revenue</th></tr></thead><tbody>${summary.map((r) => `<tr><td>${esc(r.team)}</td><td>${r.orders}</td><td>${r.units}</td><td>${Number(r.revenue).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join("")}</tbody></table>`
             : esc(report || "");
-    $("#output-summary").textContent = running
-            ? "running jobs…"
-        : verified && report
-          ? "report verified."
-          : receipts.some((r) => !r.ok)
-            ? "handoff blocked."
-            : "run the workflow.";
+    $("#output-summary").textContent = "Report";
     const passed = Object.values(states).filter((s) => s === "passed").length;
     const failed = Object.values(states).some((s) => s === "failed");
     const reportPanel = $(".report-preview"), queue = $(".queue");
@@ -51,13 +44,15 @@ function render() {
     if (verified) queue.before(reportPanel);
     else queue.after(reportPanel);
     $("#run-phase").textContent = running
-        ? "dispatching jobs"
+        ? "Running"
         : failed
-          ? "handoff blocked"
+          ? "Blocked"
           : verified && report
-            ? "verified and ready"
-            : "ready to dispatch";
-    $("#run-count").textContent = `${tasks.length} tasks · ${passed} verified`;
+            ? "Verified"
+            : "Ready";
+    $("#run-count").textContent = running || verified || failed
+        ? `${passed} / ${tasks.length} jobs`
+        : `${tasks.length} jobs`;
     const stageRoles = {
         scope: "product manager",
         schedule: "baxter",
@@ -85,7 +80,6 @@ function render() {
             return `<article class="task" data-state="${states[t.id]}"><span class="avatar ${roleClass(t.role)}" aria-hidden="true"></span><div><span class="role">${esc(t.role || "baxter")}</span><h3>${esc(t.title || t.id)}</h3>${receipt ? `<p class="proof">${esc(receipt.proof || receipt.error)}</p>` : ""}</div><span class="state ${states[t.id]}">${states[t.id]}</span></article>`;
         })
         .join("");
-    $("#progress").textContent = `${passed} / ${tasks.length} verified`;
     for (const id of [
         "run",
         "break",
@@ -110,7 +104,7 @@ function render() {
                 (r) =>
                     `<div class="receipt"><b>${esc(r.id)} / ${r.ok ? "passed" : "failed"}</b><p>${esc(r.proof || r.error)}</p><p>${esc(r.outputs.join(", "))}</p><time>${r.elapsed.toFixed(2)} ms / ${esc(r.time)}</time></div>`,
             )
-            .join("") || "<p>Run the workflow to collect receipts.</p>";
+            .join("") || "<p>No receipts yet.</p>";
     window.__baxter = {
         ready: true,
         running,
@@ -216,7 +210,7 @@ $("#save-input").onclick = () => {
     if ($("#file").value === "input/orders.csv") inputOrigin = "edited";
     resetRun();
     $("#status").textContent =
-        "Input saved. Run the workflow to regenerate and verify its outputs.";
+        "Input saved.";
 };
 $("#break").onclick = () => {
     inputs["input/orders.csv"] = inputs["input/orders.csv"].replace(
@@ -225,7 +219,7 @@ $("#break").onclick = () => {
     );
     resetRun();
     $("#status").textContent =
-        "One order now has a negative quantity. Run it and inspect the verifier.";
+        "Negative quantity set.";
 };
 $("#reset").onclick = () => {
     tasks = structuredClone(original.tasks);
@@ -237,7 +231,7 @@ $("#reset").onclick = () => {
     $("#definitions").value = JSON.stringify(tasks, null, 2);
     resetRun();
     $("#status").textContent =
-        "Restored 240 synthetic source rows and the original workflow.";
+        "";
 };
 $("#input-file").onchange = async (event) => {
     const file = event.target.files[0];
@@ -253,7 +247,7 @@ $("#input-file").onchange = async (event) => {
         inputOrigin = "uploaded";
         $("#input-status").textContent = "";
         resetRun();
-        $("#status").textContent = "Input replaced. Run the workflow to validate it.";
+        $("#status").textContent = "Input replaced.";
     } catch (error) {
         $("#input-status").textContent = error.message;
     } finally {
@@ -268,7 +262,7 @@ $("#apply").onclick = () => {
         resetRun();
         $("#task-error").textContent = "";
         $("#status").textContent =
-            "Task changes applied. Run the workflow to test them.";
+            "Workflow updated.";
     } catch (e) {
         $("#task-error").textContent = e.message;
     }
