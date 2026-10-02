@@ -41,6 +41,7 @@ function render() {
     const failed = Object.values(states).some((s) => s === "failed");
     const reportPanel = $(".report-preview"), queue = $(".queue");
     reportPanel.hidden = !verified && !failed;
+    queue.open = running || failed;
     if (verified) queue.before(reportPanel);
     else queue.after(reportPanel);
     $("#run-phase").textContent = running
