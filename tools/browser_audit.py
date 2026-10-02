@@ -25,6 +25,8 @@ try:
         assert page.locator('[data-beat="scope"]').get_attribute('data-state') == 'passed'
         assert page.locator('[data-beat="verify"]').get_attribute('data-active') == 'true'
         assert 'verified and ready' in page.locator('#run-phase').inner_text()
+        assert page.locator('#status').inner_text() == ''
+        assert page.locator('.report-preview').bounding_box()['y'] < page.locator('.queue').bounding_box()['y']
         assert 'Team order report' in page.locator('#content').input_value()
         with page.expect_download() as dl:page.locator('#export').click()
         import json
@@ -73,6 +75,7 @@ try:
         page.screenshot(path=str(ROOT/'output'/'playwright'/'mobile.png'),full_page=True)
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'mobile overflow'
         assert page.locator('#report-preview table tbody tr').count()==4
+        assert page.locator('.report-preview').bounding_box()['y'] < page.locator('.queue').bounding_box()['y']
         assert page.evaluate("getComputedStyle(document.querySelector('#run')).transitionDuration")=='0s'
         # A blocked asset produces a usable error, no working-looking run button.
         failed=browser.new_page()

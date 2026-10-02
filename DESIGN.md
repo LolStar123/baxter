@@ -4,7 +4,7 @@
 
 The audience is a developer inspecting how a Discord-first coordinator turns an order file into a verified handoff. The primary action is Run workflow. The visual reference is the repository's actual request/worker/proof model and Discord's channel grammar: scope at left, a chronological run thread in the centre, run files at right. No simulated server controls or invented conversations.
 
-The previous narrow showcase hid input and proof behind disclosures. This redesign fills the browser with a working room. The signature is a connected execution thread that ends in a report only when every declared job passes. Keep the attachment, run button and artifact selector visible.
+The previous narrow showcase hid input and proof behind disclosures. This redesign fills the browser with a working room. The execution thread records each job. Once every declared job passes, the report moves above the completed thread so the result comes first on mobile. Keep the attachment, run button and artifact selector visible. Scope and Run files are direct headings; success is stated once in the run status.
 
 ## System
 

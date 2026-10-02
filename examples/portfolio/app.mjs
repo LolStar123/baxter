@@ -46,6 +46,10 @@ function render() {
             : "run the workflow.";
     const passed = Object.values(states).filter((s) => s === "passed").length;
     const failed = Object.values(states).some((s) => s === "failed");
+    const reportPanel = $(".report-preview"), queue = $(".queue");
+    reportPanel.hidden = !verified && !failed;
+    if (verified) queue.before(reportPanel);
+    else queue.after(reportPanel);
     $("#run-phase").textContent = running
         ? "dispatching jobs"
         : failed
@@ -187,7 +191,9 @@ function pump() {
             if (states[t.id] === "pending") states[t.id] = "blocked";
         running = false;
         const failed = Object.values(states).some((s) => s !== "passed");
-        $("#status").textContent = failed ? "handoff blocked." : "verified and ready.";
+        $("#status").textContent = failed
+            ? receipts.find((receipt) => !receipt.ok)?.error || "A prerequisite failed. Inspect the run thread."
+            : "";
         render();
         if (!failed) {
             $("#file").value = files["output/report.md"]

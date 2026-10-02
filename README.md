@@ -8,7 +8,7 @@ A Discord-first coordinator with a separate proof gate between completed work an
 
 ## Try it
 
-Click **Run workflow**. Ten executable jobs process 240 synthetic CSV rows, keep 220 unique orders and write a team report. A separate job recalculates the totals; the handoff appears only after every job passes. Artifacts and timed receipts stay beside the thread.
+Click **Run workflow**. Ten executable jobs process 240 synthetic CSV rows, keep 220 unique orders and write a team report. A separate job recalculates the totals; the handoff appears only after every job passes. The completed report appears above the job thread. Artifacts and timed receipts stay in the inspector.
 
 - Replace the CSV attachment or edit an input in the inspector, save it and rerun.
 - Select **Receipts** to read each job's proof, duration and output paths.
