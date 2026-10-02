@@ -19,20 +19,27 @@ let original,
     states = {},
     receipts = [],
     running = false,
-    active = 0;
+    active = 0,
+    inputName = "orders.csv",
+    inputOrigin = "synthetic";
 function render() {
     const report = files["output/report.md"];
-    $("#report-preview").hidden = !report;
+    const verified = tasks.length > 0 && tasks.every((task) => states[task.id] === "passed");
+    $("#report-preview").hidden = !report || !verified;
+    $("#scope-jobs").textContent = tasks.length;
+    $("#input-name").textContent = inputName;
+    const rows = Math.max(0, (inputs["input/orders.csv"] || "").trim().split(/\r?\n/).length - 1);
+    $("#input-meta").textContent = `${rows} source rows · ${inputOrigin}`;
     const summary = files["output/summary.json"]
         ? JSON.parse(files["output/summary.json"])
         : null;
     $("#report-preview").innerHTML =
-        report && Array.isArray(summary)
+        report && verified && Array.isArray(summary)
             ? `<table><thead><tr><th>team</th><th>orders</th><th>units</th><th>revenue</th></tr></thead><tbody>${summary.map((r) => `<tr><td>${esc(r.team)}</td><td>${r.orders}</td><td>${r.units}</td><td>${Number(r.revenue).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join("")}</tbody></table>`
             : esc(report || "");
     $("#output-summary").textContent = running
             ? "running jobs…"
-        : report
+        : verified && report
           ? "report verified."
           : receipts.some((r) => !r.ok)
             ? "handoff blocked."
@@ -43,7 +50,7 @@ function render() {
         ? "dispatching jobs"
         : failed
           ? "handoff blocked"
-          : report
+          : verified && report
             ? "verified and ready"
             : "ready to dispatch";
     $("#run-count").textContent = `${tasks.length} tasks · ${passed} verified`;
@@ -82,6 +89,7 @@ function render() {
         "apply",
         "save-input",
         "capacity",
+        "input-file",
     ])
         $("#" + id).disabled = running;
     $("#export").disabled = !receipts.length;
@@ -190,6 +198,7 @@ function pump() {
     } else render();
 }
 $("#run").onclick = () => {
+    if (running || !original) return;
     resetRun();
     running = true;
     $("#status").textContent = "running…";
@@ -198,6 +207,7 @@ $("#run").onclick = () => {
 $("#file").onchange = showFile;
 $("#save-input").onclick = () => {
     inputs[$("#file").value] = $("#content").value;
+    if ($("#file").value === "input/orders.csv") inputOrigin = "edited";
     resetRun();
     $("#status").textContent =
         "Input saved. Run the workflow to regenerate and verify its outputs.";
@@ -214,10 +224,35 @@ $("#break").onclick = () => {
 $("#reset").onclick = () => {
     tasks = structuredClone(original.tasks);
     inputs = { ...original.files };
+    inputName = "orders.csv";
+    inputOrigin = "synthetic";
+    $("#input-status").textContent = "";
+    $("#task-error").textContent = "";
     $("#definitions").value = JSON.stringify(tasks, null, 2);
     resetRun();
     $("#status").textContent =
         "Restored 240 synthetic source rows and the original workflow.";
+};
+$("#input-file").onchange = async (event) => {
+    const file = event.target.files[0];
+    if (!file || running) return;
+    try {
+        if (!/\.csv$/i.test(file.name)) throw Error("Choose a .csv file with id, team, amount and quantity columns.");
+        if (file.size > 250000) throw Error("Choose a CSV under 250 KB.");
+        const text = await file.text();
+        if (running) return;
+        if (!text.trim()) throw Error("The CSV is empty. Choose a file with order rows.");
+        inputs["input/orders.csv"] = text;
+        inputName = file.name;
+        inputOrigin = "uploaded";
+        $("#input-status").textContent = "";
+        resetRun();
+        $("#status").textContent = "Input replaced. Run the workflow to validate it.";
+    } catch (error) {
+        $("#input-status").textContent = error.message;
+    } finally {
+        event.target.value = "";
+    }
 };
 $("#apply").onclick = () => {
     try {
@@ -262,6 +297,6 @@ try {
     validateTasks(original.tasks);
     $("#reset").click();
 } catch (e) {
-    $("#status").textContent = e.message;
-    throw e;
+    $("#status").textContent = `${e.message}. Refresh to retry.`;
+    for (const id of ["run", "break", "reset", "apply", "save-input", "export", "input-file"]) $("#" + id).disabled = true;
 }

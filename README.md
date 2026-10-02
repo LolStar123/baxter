@@ -1,154 +1,102 @@
-<!-- working-example:start -->
-## Run the Discord workflow lab
-
-**[Open the live lab](https://lolstar123.github.io/baxter/)** | [Working browser code](examples/portfolio) | [Local runner](tools/run_workflow.mjs)
-
-Run ten real code jobs over 240 synthetic orders. The workflow parses and validates input, removes duplicate IDs, creates a team report and independently reconciles its totals. Inspect every generated file and timed execution receipt. Break an input to see verification fail and downstream work stop; restore it and rerun.
-
-Change concurrency, edit the task definitions and dependencies, or replace the input CSV. Export all artifacts and receipts as JSON. The same actions run locally with:
-
-```sh
-node tools/run_workflow.mjs
-node --test examples/portfolio/model.test.mjs
-```
-
-![Baxter workflow desk](examples/portfolio/preview.png)
-
-The browser executes deterministic jobs in Web Workers, not paid AI agents. Scheduling respects dependencies, capacity and declared read/write conflicts. It demonstrates Baxter's orchestration and proof gates using real executable work; the original system source and setup are below.
-
-<!-- working-example:end -->
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
-  <img src="docs/media/banner-light.svg" alt="Baxter system readout: intake, gate, build, and proof are online." width="100%">
-</picture>
-
 # Baxter
 
-Baxter is an autonomous chief-of-staff that turns Gmail, Discord, WhatsApp, and
-voice-note inputs into a governed stream of replies, reminders, and build work.
-It can propose and implement its own features, but it cannot simply declare them
-finished: a machine-checked PRD, a second-model review, conflict-aware scheduling,
-and an independent verification pass sit between an idea and a landed result.
+A Discord-first coordinator with a separate proof gate between completed work and a delivered result.
 
-This repository is the sanitised public core- 25 Python and PowerShell modules
-from a larger, continuously running system. It is designed to be inspected and
-tested without exposing the machine-specific integrations that operate it.
+**[Open the workflow room](https://lolstar123.github.io/baxter/)** · [Browser code](examples/portfolio) · [Public-core scope](PROVENANCE.md)
 
-## System readout
+![Baxter workflow room with channel scope, execution thread and artifact inspector](examples/portfolio/preview.png)
 
-| Signal | Observed in this repository |
-|---|---|
-| `SOURCE` | 23 Python modules + 2 PowerShell modules, 30,234 source lines |
-| `INTAKE` | Three-account IMAP, Discord, a read-only WhatsApp feed, and a supervised voice-transcription handoff |
-| `SCHEDULER` | 10 build lanes with declared touch-sets and live conflict checks |
-| `GOVERNOR` | Big work holds at 80% session usage; routine work holds at 90%; vital work remains available |
-| `PROOF` | The diagram self-test reports `22 nodes, 10 lanes, text extractable` |
+## Try it
 
-The numbers above come from the checked-in source, not an external dashboard.
-The commands under [Quickstart](#quickstart) reproduce the runnable checks.
+Click **Run workflow**. Ten executable jobs process 240 synthetic CSV rows, keep 220 unique orders and write a team report. A separate job recalculates the totals; the handoff appears only after every job passes. Artifacts and timed receipts stay beside the thread.
 
-## Control loop
+- Replace the CSV attachment or edit an input in the inspector, save it and rerun.
+- Select **Receipts** to read each job's proof, duration and output paths.
+- Open **Failure drill**, break one quantity and run again. Validation fails and dependent work is blocked. **Restore example** recovers the original input.
+- **Export run** downloads the input, generated files, task definitions, states and receipts together.
 
-```mermaid
-flowchart LR
-    INPUTS["Gmail · Discord · WhatsApp · voice"] --> PUMP["Triage pump<br/>normalise · journal · route"]
-    PUMP -->|"small ask"| FAST["Fast reply lane"]
-    FAST --> MOUTH["Single deduplicated output path"]
-    PUMP -->|"build-worthy"| PRD["Machine-checked PRD"]
-    PRD --> REVIEW{"Independent PM review"}
-    REVIEW -->|"refuse"| PARK["Park with evidence"]
-    REVIEW -->|"approve"| QUEUE["Conflict-aware queue<br/>10 bounded lanes"]
-    QUEUE --> WORKER["Scoped build worker"]
-    WORKER --> VERIFY{"Independent verification"}
-    VERIFY -->|"proved"| MOUTH
-    VERIFY -->|"not proved"| REPAIR["Classify · retry · repair · cap"]
-    REPAIR --> QUEUE
-    USAGE["Usage governor<br/>80% big hold · 90% vital-only"] -.-> PUMP
-    USAGE -.-> QUEUE
-```
+The browser executes deterministic JavaScript in Web Workers. It makes no model call and sends no Discord message. Uploaded files stay in the tab; refreshing clears them. CSV uploads are limited to 250 KB. The synthetic fixture has no real customer records.
 
-The important boundary is between `WORKER` and `VERIFY`. A worker's completion
-message is a claim. [baxter_verify.py](baxter_verify.py) runs the declared proof
-separately, classifies the failure, and records the outcome before anything is
-treated as landed.
+## Run locally
 
-## Why the system is difficult
-
-**It schedules edits, not just tasks.** Each queued build declares the files or
-regions it may touch. [baxter_usage.py](baxter_usage.py) refuses vague hub-file
-claims, detects overlapping work, and prevents colliding lanes from running
-together.
-
-**It has one mouth.** Replies pass through
-[baxter_say.py](baxter_say.py) and
-[baxter_send_dedup.py](baxter_send_dedup.py). Shared claim ledgers and locks make
-duplicate delivery a structural failure instead of a prompt-level suggestion.
-
-**It verifies the verifier.** PRD checks reject proofs that cannot fail, malformed
-commands, missing touch-set paths, and trivial checks that already pass before
-the build starts.
-
-**It degrades deliberately.** The usage governor drains or holds new work by
-class while keeping the vital reply path alive. Meter staleness, reset windows,
-and explicit breach controls are encoded as state transitions rather than token
-estimates.
-
-**It supervises its own supervision.** The watcher maintains heartbeats during
-long triage passes, the reaction audit reconciles visible work receipts against
-delivered replies, and the stuck doctor measures process-tree progress instead
-of trusting that a PID still exists.
-
-## Quickstart
-
-The public core is a readable reference implementation, not a turnkey daemon.
-Its production adapters and secrets remain outside this repository. The
-self-contained checks below are the fastest way to exercise real control paths:
+The browser lab needs Python 3 for serving files and a modern browser. Node.js 20+ runs the model tests and the matching command-line workflow. There is no npm installation step.
 
 ```powershell
 git clone https://github.com/LolStar123/baxter.git
 cd baxter
+python -m http.server 8000 --bind 127.0.0.1 --directory examples/portfolio
+```
+
+Open [localhost:8000](http://localhost:8000). Serve over HTTP; opening `index.html` directly will prevent module workers and fixture loading. Stop the server with Ctrl+C.
+
+In another terminal:
+
+```powershell
+node --test examples/portfolio/model.test.mjs
+node tools/run_workflow.mjs
+```
+
+Expected: four tests pass, then `10/10 jobs passed`. The runner writes `output/workflow-receipts.json`. Its independent totals proof records `checkedOrders: 220`.
+
+## How the lab works
+
+```mermaid
+flowchart LR
+    CSV[CSV input] --> Parse[Parse + validate]
+    Parse --> Clean[Deduplicate]
+    Clean --> Totals[Team totals]
+    Totals --> Report[Markdown report]
+    Totals --> Verify[Independent reconciliation]
+    Report --> Gate[Verified manifest]
+    Verify --> Gate
+    Gate --> Handoff[Report + receipts]
+```
+
+| File | Responsibility |
+|---|---|
+| [`examples/portfolio/app.mjs`](examples/portfolio/app.mjs) | Dispatch, UI states, input replacement and export |
+| [`examples/portfolio/model.mjs`](examples/portfolio/model.mjs) | Task validation, file conflicts, dependency scheduling and executable jobs |
+| [`examples/portfolio/worker.mjs`](examples/portfolio/worker.mjs) | Isolated job execution |
+| [`examples/portfolio/data/workflow.json`](examples/portfolio/data/workflow.json) | Synthetic CSV and ten declared tasks |
+| [`tools/run_workflow.mjs`](tools/run_workflow.mjs) | Node runner using the same job implementations |
+| [`tools/browser_audit.py`](tools/browser_audit.py) | Browser execution, failure/recovery, uploads, keyboard and export checks |
+
+Each worker receives only its declared input files. Dispatch respects capacity, dependencies and overlapping read/write paths. A worker times out after ten seconds; failed prerequisites block dependent jobs. Receipts report actual elapsed execution time, including worker startup.
+
+## The original system
+
+The public core contains the Python and PowerShell coordination modules from the original local system. Gmail, Discord, a read-only WhatsApp feed and supervised voice transcription feed its intake. Work passes through a machine-checked PRD, independent review, bounded build lanes and an independent verifier before the shared delivery path accepts it.
+
+This core is a reference implementation. Production adapters, credentials and machine-specific configuration are outside the repository; cloning it does not start a working daemon. The browser lab makes its scheduling and proof mechanisms inspectable without those integrations.
+
+| Layer | Start here |
+|---|---|
+| Intake and commands | [`baxter_triage.py`](baxter_triage.py), [`baxter_gmail.py`](baxter_gmail.py), [`baxter_slash.py`](baxter_slash.py) |
+| Capacity and governance | [`baxter_usage.py`](baxter_usage.py), [`baxter_lanes.py`](baxter_lanes.py), [`baxter_modelguard.py`](baxter_modelguard.py) |
+| Specification and execution | [`baxter_prd_template.py`](baxter_prd_template.py), [`baxter_pm_delegate.py`](baxter_pm_delegate.py), [`baxter_orch.py`](baxter_orch.py) |
+| Acceptance | [`baxter_verify.py`](baxter_verify.py), [`baxter_rules.py`](baxter_rules.py) |
+| Delivery and supervision | [`baxter_say.py`](baxter_say.py), [`baxter_send_dedup.py`](baxter_send_dedup.py), [`baxter_watch.ps1`](baxter_watch.ps1) |
+
+Run the self-contained source checks:
+
+```powershell
 python baxter_modelguard.py --selftest
 python baxter_reaction_watch.py --selftest
 python baxter_prd_template.py --print
 ```
 
-Expected proof lines:
+Expected: `modelguard selftest OK`, `PHANTOM-COG SELFTEST OK`, then the PRD form. The historical model names printed by modelguard belong to this source snapshot, not the browser workers.
 
-```text
-modelguard selftest OK: 12 classes, file=haiku, prose=sonnet, fast=sonnet, flagship=opus, Fable refused.
-PHANTOM-COG SELFTEST OK
-```
-
-The third command prints the actual 74-line PRD form used by the gate. To verify
-the code-derived architecture diagram as well:
+## Browser verification
 
 ```powershell
-python -m pip install matplotlib
-python baxter_flow_diagram.py --selftest
+python -m pip install playwright
+python -m playwright install chromium
+python tools/browser_audit.py
 ```
 
-That check returns `SELFTEST OK (22 nodes, 10 lanes, text extractable)`.
+The audit uses installed Chrome on Windows and Playwright Chromium elsewhere. It starts its own loopback server and checks actual worker outputs, blocked handoffs, recovery, CSV upload and rejection, invalid task JSON, keyboard activation, repeated inspector clicks, download contents, fixture-load errors and reduced motion. It captures desktop and 390 px mobile views in `output/playwright/`; the desktop view also updates the screenshot above.
 
-## Module map
+These checks do not establish production Discord delivery or model-agent quality. Keep real integrations and account data out of the public lab.
 
-| Layer | Primary modules | Responsibility |
-|---|---|---|
-| Supervision | [baxter_watch.ps1](baxter_watch.ps1), [baxter_stuck_doctor.py](baxter_stuck_doctor.py), [baxter_coop_guardian.py](baxter_coop_guardian.py) | Heartbeats, hot reload, liveness, and recovery |
-| Intake | [baxter_triage.py](baxter_triage.py), [baxter_gmail.py](baxter_gmail.py), [baxter_slash.py](baxter_slash.py) | Read, normalise, route, and expose commands |
-| Governance | [baxter_usage.py](baxter_usage.py), [baxter_lanes.py](baxter_lanes.py), [baxter_modelguard.py](baxter_modelguard.py) | Budget gates, lane ownership, and model policy |
-| Build | [baxter_prd_template.py](baxter_prd_template.py), [baxter_pm_delegate.py](baxter_pm_delegate.py), [baxter_orch.py](baxter_orch.py) | Specify, review, plan, execute, and review again |
-| Proof | [baxter_verify.py](baxter_verify.py), [baxter_rules.py](baxter_rules.py) | Independent acceptance and prompt-rule integrity |
-| Output | [baxter_say.py](baxter_say.py), [baxter_send_dedup.py](baxter_send_dedup.py), [baxter_reaction_watch.py](baxter_reaction_watch.py) | One delivery path, deduplication, and receipt repair |
-| Diagnosis | [baxter_doctor_ai.py](baxter_doctor_ai.py), [baxter_coop.py](baxter_coop.py) | Bounded multi-model diagnosis and analyst fan-out |
-
-## Contributing
-
-Keep changes narrow, preserve the fail-closed gates, and extend a self-test when
-behaviour changes. Never add real account identifiers, machine usernames,
-absolute personal paths, inbox content, or credentials. Open an issue first for
-changes that widen an outward action or weaken an approval boundary.
-
-## Licence
-
-[MIT](LICENSE). Built by [Atul Kanodia](https://github.com/LolStar123).
+[MIT license](LICENSE) · Built by [Atul Kanodia](https://github.com/LolStar123)
